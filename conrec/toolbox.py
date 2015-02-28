@@ -2,11 +2,13 @@ import datetime
 import urllib2
 import json
 import operator
-import logging
 
 from math import radians, cos, sin, atan2, sqrt
 
-dp = 'p'# development or production
+from conrec.models import Ignore
+
+
+dp = 'p'  # development or production
 earth_radius = 6371500  # radius of the earth in meters
 
 '''                  Walking          Sitting         Standing          Default      '''
@@ -124,7 +126,22 @@ def grade_distance(lat_a, lng_a, lat_b, lng_b):
         return 1
 
 
-def get_recommendation(time_stamp, coordinates, user_id):
+def save_ignored_for_current_user(user_id, poi_id):
+    i_poi = Ignore(uuid=user_id, ignored=poi_id)
+    i_poi.save()
+
+
+def get_ignored_for_current_user(user_id):
+    lst_ignored = []
+    user_exist = Ignore.objects.filter(uuid=user_id).exists()
+    if user_exist:
+        i_poi = Ignore.objects.all().filter(uuid=user_id)
+        for poi in i_poi:
+            lst_ignored.append(poi.ignored)
+    return lst_ignored
+
+
+def get_recommendation(time_stamp, coordinates, user_id, ignore):
     part_of_day = get_time_section(time_stamp)
     act_rest_answer = get_user_activity(user_id)
     if 'error' in act_rest_answer:
@@ -141,6 +158,15 @@ def get_recommendation(time_stamp, coordinates, user_id):
         s_res = grade_distance(coordinates['lat'], coordinates['lon'], val['fw_core']['location']['wgs84'][
             'latitude'], val['fw_core']['location']['wgs84']['longitude'])
         poi_lst[key] = f_res * s_res
+
+    ''' Slice out ignored. '''
+    if ignore != 'None' and ignore in poi_lst:
+        save_ignored_for_current_user(user_id, ignore)
+
+    ignored = get_ignored_for_current_user(user_id)
+    for ig_poi in ignored:
+        if ig_poi in poi_lst:
+            del poi_lst[ig_poi]
 
     ''' Sort pois based on grades and return first 15 elements. '''
     sort_poi_lst = sorted(poi_lst.items(), key=operator.itemgetter(1), reverse=True)

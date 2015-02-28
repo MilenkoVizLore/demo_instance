@@ -1,3 +1,6 @@
 from django.db import models
 
-# Create your models here.
+
+class Ignore(models.Model):
+    uuid = models.CharField(max_length=30)
+    ignored = models.CharField(max_length=30)

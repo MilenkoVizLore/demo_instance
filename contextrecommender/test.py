@@ -33,6 +33,7 @@ def get_activity():
             return 'None'
     return result
 
+
 def get_poi(lat, lon, radius):
     url = 'http://130.211.136.203/poi_dp/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lon, radius)
     headers = dict()
