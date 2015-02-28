@@ -36,6 +36,3 @@ class Recommend(View):
     def post(self, request):
         data = 'Use GET method instead.'
         return HttpResponse(data)
-
-class Test(View):
-    def

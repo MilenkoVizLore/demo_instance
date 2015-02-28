@@ -9,13 +9,13 @@ from math import radians, cos, sin, atan2, sqrt
 dp = 'p'# development or production
 earth_radius = 6371500  # radius of the earth in meters
 
-'''                  Walking          Sitting         Standing             '''
-lookup_table = [[[2, 5, 1, 1, 4], [3, 4, 1, 1, 4], [3, 4, 1, 1, 4]], # Morning
-                [[4, 2, 5, 1, 1], [4, 1, 3, 1, 1], [5, 1, 4, 1, 1]], # Noon
-                [[4, 4, 2, 2, 3], [4, 4, 1, 2, 3], [4, 4, 1, 2, 3]], # Afternoon
-                [[3, 1, 5, 4, 4], [2, 1, 4, 4, 4], [2, 1, 4, 4, 4]], # Evening
-                [[1, 1, 1, 5, 5], [1, 1, 1, 4, 5], [1, 1, 1, 4, 5]]] # Night
-'''               [ Free time, Morning, Lunch, Bar, Transport ]            '''
+'''                  Walking          Sitting         Standing          Default      '''
+lookup_table = [[[2, 5, 1, 1, 4], [3, 4, 1, 1, 4], [3, 4, 1, 1, 4], [3, 5, 1, 1, 4]], # Morning
+                [[4, 2, 5, 1, 1], [4, 1, 3, 1, 1], [5, 1, 4, 1, 1], [4, 1, 4, 1, 1]], # Noon
+                [[4, 4, 2, 2, 3], [4, 4, 1, 2, 3], [4, 4, 1, 2, 3], [4, 4, 1, 2, 3]], # Afternoon
+                [[3, 1, 5, 4, 4], [2, 1, 4, 4, 4], [2, 1, 4, 4, 4], [2, 1, 4, 4, 4]], # Evening
+                [[1, 1, 1, 5, 5], [1, 1, 1, 4, 5], [1, 1, 1, 4, 5], [1, 1, 1, 4, 5]]] # Night
+'''               [ Free time,    Morning,    Lunch,    Bar,    Transport ]                      '''
 
 
 def get_time_section(milliseconds):
@@ -34,15 +34,25 @@ def get_time_section(milliseconds):
 
 
 def get_curr_activity(prob_lst):
-    if float(prob_lst['sitting']) > 0.5:
+    if float(prob_lst['sitting']) > 0.4:
         return 1
-    elif float(prob_lst['walking']) > 0.5:
+    elif float(prob_lst['walking']) > 0.4:
         return 0
-    elif float(prob_lst['standing']) > 0.5:
+    elif float(prob_lst['standing']) > 0.4:
         return 2
     else:
         2
 
+
+def decode_activity(act):
+    if act == 0:
+        return "walking"
+    elif act == 1:
+        return "sitting"
+    elif act == 2:
+        return "standing"
+    else:
+        return "not recognisable activity"
 
 
 def get_user_activity(user_id):
@@ -70,7 +80,7 @@ def distance_between_gps_coordinates(lat_a, lon_a, lat_b, lon_b):
 
 
 def get_poi(lat, lng, radius):
-    url = 'http://130.211.136.203/poi_dp/radial_search.php?lat=%d&lon=%d&radius=%d' % (lat, lng, radius)
+    url = 'http://130.211.136.203/poi_dp/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, radius)
     headers = dict()
     headers['Content-type'] = 'application/json'
     result = None
@@ -81,7 +91,10 @@ def get_poi(lat, lng, radius):
         print "error"
         result = None
     poi = json.loads(result)
-    return poi['pois']
+    if len(poi['pois']) > 0:
+        return poi['pois']
+    else:
+        return dict()
 
 
 def decode_category(category):
@@ -110,18 +123,16 @@ def grade_distance(lat_a, lng_a, lat_b, lng_b):
     else:
         return 1
 
+
 def get_recommendation(time_stamp, coordinates, user_id):
-    dbalogger = logging.getLogger(__name__)
-    if dp == 'p':
-        part_of_day = get_time_section(time_stamp)
-        act_rest_answer = get_user_activity(user_id)
-        activity = get_curr_activity(act_rest_answer['svm_vector'])
+    part_of_day = get_time_section(time_stamp)
+    act_rest_answer = get_user_activity(user_id)
+    if 'error' in act_rest_answer:
+        activity = 3
     else:
-        part_of_day = 0
-        act_rest_answer = {'svm_vector': [0.2, 0.1, 0.5, 0.1, 0.1], 'cur_act': 'walking'}
         activity = get_curr_activity(act_rest_answer['svm_vector'])
 
-    points_of_interest = get_poi(coordinates['lat'], coordinates['lon'], 200)
+    points_of_interest = get_poi(coordinates['lat'], coordinates['lon'], 300)
     poi_lst = {}
 
     ''' Get id of all poi and rate them based on activity, context and distance. '''
@@ -132,12 +143,12 @@ def get_recommendation(time_stamp, coordinates, user_id):
         poi_lst[key] = f_res * s_res
 
     ''' Sort pois based on grades and return first 15 elements. '''
-    sort_poi_lst = sorted(poi_lst.items(), key=operator.itemgetter(1))
-    ret_dict = dict()
-    if len(sort_poi_lst) > 15:
-        n_it = 15
+    sort_poi_lst = sorted(poi_lst.items(), key=operator.itemgetter(1), reverse=True)
+    ret_dict = {"POIS": [], "activity": decode_activity(act_rest_answer)}
+    if len(sort_poi_lst) > 5:
+        n_it = 5
     else:
         n_it = len(sort_poi_lst)
     for num in range(0, n_it):
-        ret_dict[sort_poi_lst[num][0]] = points_of_interest[sort_poi_lst[num][0]]
+        ret_dict['POIS'].append({sort_poi_lst[num][0]: points_of_interest[sort_poi_lst[num][0]]})
     return ret_dict

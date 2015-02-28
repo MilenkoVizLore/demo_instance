@@ -34,7 +34,7 @@ def get_activity():
     return result
 
 def get_poi(lat, lon, radius):
-    url = 'http://130.211.136.203/poi_dp/radial_search.php?lat=%d&lon=%d&radius=%d' % (lat, lon, radius)
+    url = 'http://130.211.136.203/poi_dp/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lon, radius)
     headers = dict()
     headers['Content-type'] = 'application/json'
     result = None
@@ -46,4 +46,4 @@ def get_poi(lat, lon, radius):
         return None
     return result
 
-print get_poi(0.0, 0.0, 1000)
+print get_poi(41.4022365, 2.1887515, 500)
