@@ -1,2 +1,2 @@
-# LCI-FIC2-SE
-Source code for modules of the Context Aware Recommendation specific enabler
+# LCI-FIC2-SE-Mobile-App
+Source code for Mobile Application module of the Context Aware Recommendation specific enabler
