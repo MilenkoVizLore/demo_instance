@@ -31,9 +31,9 @@ class Recommend(View):
         else:
             ignore = 'None'
 
-        # Get poi_num param for final version.
-        #
-        # ------------------------------------
+        # +--------------------------------------+
+        # | Get poi_num param for final version. |
+        # +--------------------------------------+
 
         dict_res = get_recommendation(ts, {'lat': lat, 'lon': lon}, uuid, ignore)
         return HttpResponse(json.dumps(dict_res), content_type="application/json")
