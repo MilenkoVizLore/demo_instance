@@ -79,7 +79,8 @@ def get_user_activity(user_id):
     :param user_id: String representation of user unique identification number.
     :return: Returns answer from activity recognition provider.
     """
-    url = 'http://130.211.136.203:8080/ac/?ac=1&uuid=%s&alg=svm&fs=standard&tp=600' % user_id
+    #url = 'http://130.211.136.203:8080/ac/?ac=1&uuid=%s&alg=svm&fs=standard&tp=600' % user_id
+    url = 'http://89.216.30.67:55555/ac/?ac=1&uuid=%s&alg=svm&fs=standard&tp=600' % user_id
     headers = dict()
     headers['Accept'] = 'application/json'
     result = None
@@ -217,7 +218,10 @@ def get_recommendation(time_stamp, coordinates, user_id, ignore):
     if 'error' in act_rest_answer:
         activity = 3  # If activity recognition provider encountered some error.
     else:
-        activity = get_curr_activity(act_rest_answer['svm_vector'])
+        req_act = dict()
+        for k, v in act_rest_answer['svm_vector'].iteritems():
+            req_act[k] = float(v)
+        activity = get_curr_activity(req_act)
 
     ''' Get all POIs in radius of 300 meters from user. '''
     points_of_interest = get_poi(coordinates['lat'], coordinates['lon'], 300)
