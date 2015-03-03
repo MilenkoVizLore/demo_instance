@@ -17,5 +17,5 @@ Run /ActivityRecognition/manage.py syncdb to create the tables for the models.
 And last but not least run /ActivityRecognition/manage.py runserver {ip}:{port}
 
 An example on how to use the rest api can be found on the default webpage on {ip}:{port}
-If some problems occur during the installation or usage contact Dimitrije Jankov on dimitrije.jankov@vizlore.com
+If some problems occur during the installation or usage contact Dimitrije Jankov on dimitrijejankov@vizlore.com
 
