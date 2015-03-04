@@ -58,9 +58,9 @@ var map = {
     addPopup: function (position, html) {
         "use strict";
         var icon = L.icon({
-            iconUrl: 'img/marker.png',
+            iconUrl: 'img/marker_blue.png',
             iconSize: [25, 38],
-            iconAnchor: [12, 0]
+            iconAnchor: [12, 38]
         }),
             marker = L.marker([position.lat, position.lon], {icon: icon}).addTo(this.map);
         
@@ -75,6 +75,21 @@ var map = {
             this.map.removeLayer(this.popups[i]);
         }
         this.popups = [];
+    },
+    
+    locationMarker: null,
+    setLocationMarker: function (lat, lon) {
+        "use strict";
+        var icon = L.icon({
+            iconUrl: 'img/marker_red.png',
+            iconSize: [25, 38],
+            iconAnchor: [12, 38]
+        });
+        
+        if (map.locationMarker) {
+            map.map.removeLayer(this.locationMarker);
+        }
+        map.locationMarker = L.marker([lat, lon], {icon: icon}).addTo(this.map);
     }
     
     

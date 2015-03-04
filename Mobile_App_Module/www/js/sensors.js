@@ -78,6 +78,7 @@ var sensors = {
                     sensors.packet.location.push(position);
                     sensors.lastPositionTimestamp = curTimestamp;
                     map.setView(position.coords.latitude, position.coords.longitude);
+                    map.setLocationMarker(position.coords.latitude, position.coords.longitude);
                 }
             },
             onError = function (error) {

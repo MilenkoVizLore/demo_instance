@@ -65,10 +65,10 @@ var POIs = {
         var position = sensors.getCachedPosition(),
             data = {
                 uuid: device.uuid,
-                /*lat: position.coords.latitude,
-                lon: position.coords.longitude,*/
-                lat: 41.402486,
-                lon: 2.188002,
+                lat: position.coords.latitude,
+                lon: position.coords.longitude,
+                /*lat: 41.402486,
+                lon: 2.188002,*/
                 ts: (new Date()).getTime(),
                 ac: 1
             };
