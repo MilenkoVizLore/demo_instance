@@ -1,39 +1,24 @@
-LCIficontent-Cordova
+Mobile Application Module
 ====================
+The module is implemented as a demo Android application.
+This application is based on a Cordova 4.2.0 framework. 
+If you want to choose another recommender you should change the getPOIs() function inside POIs.js file. For choosing another activity recognition module you should change the sendData() function inside sensors.js file.
+Used Cordova plugins:
+•	org.apache.cordova.device 0.2.10 "Device"
+Used for generating UUIDs
+•	org.apache.cordova.device-motion 0.2.12-dev "Device Motion"
+Used for gathering data from accelerometer
+•	org.apache.cordova.geolocation 0.3.8 "Geolocation"
+Used for getting current location
+•	org.apache.cordova.wifiinfo 0.1.1 "Wifi Network Information"
+Used for gathering nearby SSIDs
+•	org.dartlang.phonegap.gyroscope 0.0.2 "Device Gyroscope"
+Used for gathering data from gyroscope
 
-Client side part of LCI demo application
-
-### Plugins that are used in this demo application are:
-
-- com.danielcwilson.plugins.googleanalytics 0.6.0 "Google Universal Analytics Plugin"
-- com.phonegap.plugins.PushPlugin 2.2.1 "PushPlugin"
-- org.apache.cordova.device 0.2.10 "Device"
-- org.apache.cordova.geolocation 0.3.8 "Geolocation"
-- org.apache.cordova.inappbrowser 0.5.1 "InAppBrowser"
-- org.apache.cordova.splashscreen 0.3.2 "Splashscreen"
-- org.apache.cordova.wifiinfo 0.1.1 "Wifi Network Information"
-
-Application is using Leaflet open-source JavaScript library for mobile-friendly interactive maps.
-When the application starts markers are placed on the map and they represent recommendation POI's for user device.
-
-Popup, which is part of Leaflet marker, contains POI information such as:
-- website,
-- image,
-- working hours,
-- etc.
-
-Side menu of the application is populated by categories received from cloud server.
-
-When user selects a category, application sends user data and category id to the server by using ajax call. Server will respond with POI data for selected category in JSON format. 
-If new selection is made, the application removes all POI's from map and adds new POI based on the server response. 
-
-Application has a splash screen which describes application usage.
-
-Application periodically collects and sends user data to cloud server. Data gathering is performed in the background process. Collectected data is used for activity recognition.
-
-The following data is being collected:
-- wifi networks which are in user's range
-- location data (latitude, longitude, altitude, accuracy and speed)
-
-User data is sent to server every 30 seconds.
-
+Used JavaScript libraries:
+•	leaflet.js
+Used for displaying map.
+•	jquery-1.10.2.min.js
+Used for DOM manipulations
+•	jquery.mobile-1.4.2.min.js
+Used for app design
