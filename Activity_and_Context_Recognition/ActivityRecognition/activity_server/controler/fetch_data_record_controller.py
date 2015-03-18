@@ -8,15 +8,38 @@ from scipy.interpolate import interp1d
 from scipy.signal import butter, lfilter, medfilt
 from datetime import datetime, timedelta
 
-svc_acc_gyo = joblib.load('activity_server/classifier/acc_gyo/classifier_svc.pkl')
-svc_acc = joblib.load('activity_server/classifier/acc/classifier_svc.pkl')
-tree_acc_gyo = joblib.load('activity_server/classifier/acc_gyo/classifier_tree.pkl')
-tree_acc = joblib.load('activity_server/classifier/acc/classifier_tree.pkl')
+import os
 
-svc_acc_gyo_ech = joblib.load('activity_server/classifier/acc_gyo_ech/classifier_svc.pkl')
-svc_acc_ech = joblib.load('activity_server/classifier/acc_ech/classifier_svc.pkl')
-tree_acc_gyo_ech = joblib.load('activity_server/classifier/acc_gyo_ech/classifier_tree.pkl')
-tree_acc_ech = joblib.load('activity_server/classifier/acc_ech/classifier_tree.pkl')
+for path,dirs,files in os.walk('.'):
+    for fn in files:
+        print os.path.join(path,fn)
+
+print("Path at terminal when executing this file")
+print(os.getcwd() + "\n")
+
+print("This file path, relative to os.getcwd()")
+print(__file__ + "\n")
+
+print("This file full path (following symlinks)")
+full_path = os.path.realpath(__file__)
+print(full_path + "\n")
+
+print("This file directory and name")
+path, file = os.path.split(full_path)
+print(path + ' --> ' + file + "\n")
+
+print("This file directory only")
+print(os.path.dirname(full_path))
+
+svc_acc_gyo = joblib.load('./activity_server/classifier/acc_gyo/classifier_svc.pkl')
+svc_acc = joblib.load('./activity_server/classifier/acc/classifier_svc.pkl')
+tree_acc_gyo = joblib.load('./activity_server/classifier/acc_gyo/classifier_tree.pkl')
+tree_acc = joblib.load('./activity_server/classifier/acc/classifier_tree.pkl')
+
+svc_acc_gyo_ech = joblib.load('./activity_server/classifier/acc_gyo_ech/classifier_svc.pkl')
+svc_acc_ech = joblib.load('./activity_server/classifier/acc_ech/classifier_svc.pkl')
+tree_acc_gyo_ech = joblib.load('./activity_server/classifier/acc_gyo_ech/classifier_tree.pkl')
+tree_acc_ech = joblib.load('./activity_server/classifier/acc_ech/classifier_tree.pkl')
 
 
 def recognize_last_activity(uuid, algorithm, feature_set):
