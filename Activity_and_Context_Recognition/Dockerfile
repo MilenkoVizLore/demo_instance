@@ -1,4 +1,4 @@
-FROM ubuntu 
+FROM mjdsys/ubuntu-saucy-i386
 ENV PYTHONUNBUFFERED 1
 RUN mkdir /code
 WORKDIR /code
@@ -18,4 +18,7 @@ RUN python generate_classifier_acceleration.py
 RUN python generate_enhanced_classifier.py
 RUN python generate_enhanced_classifier_acceleration.py
 WORKDIR /code/ActivityRecognition/
+EXPOSE 8089
 RUN python manage.py migrate
+ENTRYPOINT ["python", "manage.py", "runserver" ]
+CMD ["0.0.0.0:8089"]
