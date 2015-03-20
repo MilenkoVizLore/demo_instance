@@ -15,7 +15,9 @@ class Recommend(View):
             lat = float(self.request.GET['lat'])
             ts = int(self.request.GET['ts'])
         else:
-            return HttpResponse("Insufficient data provided.")
+	    response = HttpResponse("Insufficient data provided.")
+	    response.status_code = 400
+            return response
 
         if 'ac' in self.request.GET:
             ac = self.request.GET['ac']
@@ -36,7 +38,10 @@ class Recommend(View):
         # +--------------------------------------+
 
         dict_res = get_recommendation(ts, {'lat': lat, 'lon': lon}, uuid, ignore)
-        return HttpResponse(json.dumps(dict_res), content_type="application/json")
+
+	response = HttpResponse(json.dumps(dict_res), content_type="application/json")
+	response.status_code = 200
+        return response
 
     def post(self, request):
         data = 'Use GET method instead.'
