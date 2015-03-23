@@ -8,7 +8,7 @@ PORT=$2
 echo "Entering FIC2Lab smoke test sequence. LCI's validation procedure of SE Context Aware Recommendation (Activity and Context Recognition Modul) engaged. Target host: $HOST"
 echo "Waiting for initialization of the docker image"
 retry=0
-while [ $retry -lt 10 ]; do
+while [ $retry -lt 20 ]; do
 	if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null ; then
 		echo "Docker image initialized";	
 		break;
@@ -17,7 +17,7 @@ while [ $retry -lt 10 ]; do
 	retry=$(($retry+1)); 
 	sleep $retry;
 done
-if [ $retry -eq 10 ]; then
+if [ $retry -eq 20 ]; then
 	echo "Docker not initialized. Aborting test sequence.";
 	exit 1;
 fi 
