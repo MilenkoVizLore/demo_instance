@@ -84,14 +84,14 @@ def get_user_activity(user_id):
     headers = dict()
     headers['Accept'] = 'application/json'
     result = None
+
     try:
         request = urllib2.Request(url, None, headers=headers)
         result = urllib2.urlopen(request).read()
         activity = json.loads(result)
         return activity
-    except urllib2.HTTPError, e:
-        if e.code == 404 or e.code == 500:
-            return 'None'
+    except:
+    	return '{ "error": "Could not contact the server"}' 
 
 
 def distance_between_gps_coordinates(lat_a, lon_a, lat_b, lon_b):
