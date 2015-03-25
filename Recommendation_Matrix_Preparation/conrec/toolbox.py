@@ -120,7 +120,7 @@ def get_poi(lat, lng, radius):
     :return: Returns points of interest database provider answer, dictionary of available points of interest in the
     given radius.
     """
-    url = 'http://130.211.136.203/poi_dp/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, radius)
+    url = 'http://104.154.38.236/poi_dp/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, radius)
     headers = dict()
     headers['Content-type'] = 'application/json'
     result = None
