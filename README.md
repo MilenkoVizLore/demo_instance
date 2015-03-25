@@ -1,5 +1,4 @@
 # LCI-FIC2-SE
-TEST
 Source code for modules of the Context Aware Recommendation specific enabler.
 Three modules are available:
   - Mobile application module for collecting contextual and sensory data from mobile devices. Additional information in the corresponding folder.
