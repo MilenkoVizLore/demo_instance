@@ -70,7 +70,7 @@ def decode_activity(act):
     elif act == 2:
         return "standing"
     else:
-        return "not recognisable activity"
+        return "not recognised"
 
 
 def get_user_activity(user_id):
@@ -91,7 +91,7 @@ def get_user_activity(user_id):
         activity = json.loads(result)
         return activity
     except:
-    	return '{ "error": "Could not contact the server"}' 
+    	return { "error": "Could not contact the server"} 
 
 
 def distance_between_gps_coordinates(lat_a, lon_a, lat_b, lon_b):
@@ -126,12 +126,11 @@ def get_poi(lat, lng, radius):
     result = None
     try:
         request = urllib2.Request(url, None, headers=headers)
-        result = urllib2.urlopen(request).read()
-    except urllib2.HTTPError:
-        print "error"
-        result = None
+        result = urllib2.urlopen(request, timeout = 10).read()
+    except:
+        return dict()
     poi = json.loads(result)
-    if len(poi['pois']) > 0:
+    if 'pois' in poi and len(poi['pois']) > 0:
         return poi['pois']
     else:
         return dict()
