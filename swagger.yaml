@@ -1,29 +1,25 @@
-swagger: '2.0'
+swagger: "2.0"
 info:
   title: LCI Context Aware Recommendation SE
   description: REST APIs for both Context Aware Recommendation modules - Activity and Context Recognition module and Recommendation Matrix Preparation module.
-  version: "1.0.0"
+  version: 1.0.0
   contact:
     name: REST API Support
-    email: milenko.tosic@lacitadelleing.com
-# the domain of the service
-host: 89.216.30.67:8080
-# array of all schemes that your API supports
+    email: "milenko.tosic@lacitadelleing.com"
+host: "89.216.30.67:8080"
 schemes:
   - http
-# will be prefixed to all paths
 basePath: /
 produces:
   - application/json
 paths:
   /recommend/:
     get:
-      produces: 
+      produces:
         - application/json
       summary: Return POI recommendation
-      description: |
-        Sends recommendation request from mobile application to the Recommendation Matrix         Preparation server module. This SE module returns recommended POIs and actions            based on user's context and activity.
-      parameters:
+      description: "Sends recommendation request from mobile application to the Recommendation Matrix         Preparation server module. This SE module returns recommended POIs and actions            based on user's context and activity.\n"
+      parameters: 
         - name: uuid
           in: query
           description: User id based on Cordova plug-in org.apache.cordova.device 0.2.10 “Device”
@@ -67,25 +63,24 @@ paths:
       tags:
         - POI Recommendation
       responses:
-        200:
+        "200":
           description: Array of JSON formatted POIs (in line with POI JSON format defined in POI Provider GE) provided by the recommender plus recognized acitivty and user context.
           schema:
             type: array
             items:
-              $ref: '#/definitions/POI'
+              $ref: "#/definitions/POI"
               activity: Recognized user activity
               context: Recognized user context
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
+            $ref: "#/definitions/Error"
   /ac/:
     post:
-      produces: 
+      produces:
         - application/json
       summary: Sends sensory and contextual data from mobile app
-      description: |
-        Enables sensory data to be sent to the Activity and Context Recognition module from mobile devices. Sensory data include acceleration, gyroscope, GPS coordinates and surrounding WiFi network SSIDs with SNR levels.
+      description: "Enables sensory data to be sent to the Activity and Context Recognition module from mobile devices. Sensory data include acceleration, gyroscope, GPS coordinates and surrounding WiFi network SSIDs with SNR levels.\n"
       parameters:
         - name: uuid
           in: body
@@ -98,23 +93,23 @@ paths:
           required: true
           schema:
             timestamp: Current time on user device in miliseconds
-            $ref: '#/definitions/coordinates'
+            $ref: "#/definitions/coordinates"
         - name: acceleration
           in: body
-          description: Acceleration accross x, y and z axes 
+          description: "Acceleration accross x, y and z axes"
           required: true
           schema:
             type: array
             items:
-              $ref: '#/definitions/acceleration'
+              $ref: "#/definitions/acceleration"
         - name: gyroscope
           in: body
-          description: Angular acceleration accross x, y and z axes 
+          description: "Angular acceleration accross x, y and z axes"
           required: true
           schema:
             type: array
             items:
-              $ref: '#/definitions/gyroscope'
+              $ref: "#/definitions/gyroscope"
         - name: wifi
           in: body
           description: SSID of surrounding WiFi networks
@@ -122,7 +117,7 @@ paths:
           schema:
             type: array
             items:
-              $ref: '#/definitions/WiFi'
+              $ref: "#/definitions/WiFi"
         - name: wifi_connected
           in: body
           description: SSID of the WiFi network to which the end user is connected
@@ -131,13 +126,12 @@ paths:
       tags:
         - Sensory data
       responses:
-        200:
-          description: Success []
+        "200":
+          description: "Success []"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
-    
+            $ref: "#/definitions/Error"
     get:
       summary: Request for activity and context recognition
       description: Request for activity/context classification with parameters for configuring the activity/context recognition module. Sent from Recommendation Matrix Preparation module to the Activity and Context Recognition module.
@@ -170,42 +164,62 @@ paths:
       tags:
         - Request activity and context
       responses:
-        200:
+        "200":
           description: Probability vector accross all activity classes or deterministic activity class with user spatial context (connected and surrounding WiFi SSIDs and direction of movement during the specified time period in tp parameter)
           schema:
-            $ref: '#/definitions/activity_and_context'
+            $ref: "#/definitions/activity_and_context"
         default:
           description: Unexpected error
           schema:
-            $ref: '#/definitions/Error'
+            $ref: "#/definitions/Error"
 definitions:
   POI:
-    properties:
-      product_id:
-        type: string
-        description: Unique identifier representing a specific product for a given latitude & longitude. For example, uberX in San Francisco will have a different product_id than uberX in Los Angeles.
-      description:
-        type: string
-        description: Description of product.
-      display_name:
-        type: string
-        description: Display name of product.
-      capacity:
-        type: string
-        description: Capacity of product. For example, 4 people.
-      image:
-        type: string
-        description: Image URL representing the product.
+    schema:
+      type: string
+      description: Unique identifier representing a specific POI
+      schema:
+        fw_core: POI container
+        schema:
+          properties:
+            location:
+              description: Location container
+              schema:
+                wgs84: FI WARE location container
+                properties:
+                  latitude: 
+                    type: number
+                    format: double
+                    description: Latitude component of the POI location
+                  longitude: 
+                    type: number
+                    format: double
+                    description: Longitude component of the POI location
+            category: 
+              type: string
+              description: POI category specified in Recommendation Matrix Preparation module
+            name:
+              type: string
+              description: POI name obtained from Foursquare service
+            label:
+              type: string
+              description: POI sub-category defined by Foursquare service
   activity_and_context:
     properties:
-      latitude:
-        type: number
-        format: double
-        description: Latitude component of the current location
-      longitude:
-        type: number
-        format: double
-        description: Longitude component of the current location
+      activity_vector:
+        type: array
+        items:
+          type: number
+          format: double
+        description: Array of classification probabilities accross all activity classes (walking, standing, running, sitting, laying, upstairs, downstairs)
+      uuid:
+        type: string
+        description: Unique user identifier used by other SE components
+      activity:
+        type: string
+        description: Deterministic activity class based on the last 128 sensory samples
+      wifi:
+        type: string
+        description: SSID of WiFi network to which the user deviceis connected
   coordinates:
     properties:
       latitude:
@@ -218,7 +232,7 @@ definitions:
         description: Longitude component of the current location
   acceleration:
     properties:
-      timestamp: 
+      timestamp:
         type: number
         format: double
         description: Current time on user device in miliseconds
@@ -226,7 +240,7 @@ definitions:
         type: number
         format: double
         description: Acceleration accross x axis
-      y:
+      "y":
         type: number
         format: double
         description: Acceleration accross y axis
@@ -236,7 +250,7 @@ definitions:
         description: Acceleration accross z axis
   gyroscope:
     properties:
-      timestamp: 
+      timestamp:
         type: number
         format: double
         description: Current time on user device in miliseconds
@@ -244,7 +258,7 @@ definitions:
         type: number
         format: double
         description: Gyroscope x axis
-      y:
+      "y":
         type: number
         format: double
         description: Gyroscope y axis
