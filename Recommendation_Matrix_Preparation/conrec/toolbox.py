@@ -79,8 +79,8 @@ def get_user_activity(user_id):
     :param user_id: String representation of user unique identification number.
     :return: Returns answer from activity recognition provider.
     """
-    #url = 'http://130.211.136.203:8080/ac/?ac=1&uuid=%s&alg=svm&fs=standard&tp=600' % user_id
-    url = 'http://89.216.30.67:55555/ac/?ac=1&uuid=%s&alg=svm&fs=standard&tp=600' % user_id
+    url = 'http://130.211.136.203:8080/ac/?ac=1&uuid=%s&alg=svm&fs=standard&tp=600' % user_id
+    # url = 'http://89.216.30.67:55555/ac/?ac=1&uuid=%s&alg=svm&fs=standard&tp=600' % user_id
     headers = dict()
     headers['Accept'] = 'application/json'
     result = None
@@ -90,8 +90,8 @@ def get_user_activity(user_id):
         result = urllib2.urlopen(request).read()
         activity = json.loads(result)
         return activity
-    except:
-    	return { "error": "Could not contact the server"} 
+    except(RuntimeError, TypeError, NameError):
+        return {"error": "Could not contact the server"}
 
 
 def distance_between_gps_coordinates(lat_a, lon_a, lat_b, lon_b):
@@ -126,7 +126,7 @@ def get_poi(lat, lng, radius):
     result = None
     try:
         request = urllib2.Request(url, None, headers=headers)
-        result = urllib2.urlopen(request, timeout = 10).read()
+        result = urllib2.urlopen(request, timeout=10).read()
     except:
         return dict()
     poi = json.loads(result)
