@@ -2,12 +2,21 @@
 
 import urllib2
 import json
-import ssl
+import requests
 
-from math import radians, cos, sin, atan2, sqrt
+from math import radians, cos, sin, atan2, sqrt, ceil, pi, floor
 
 """ Global variables """
 EARTH_RADIUS = 6371500
+EARTH_CIRCUMFERENCE = EARTH_RADIUS * pi * 2
+EARTH_CIRCUMFERENCE_1_2 = EARTH_CIRCUMFERENCE / 2
+EARTH_CIRCUMFERENCE_1_4 = EARTH_CIRCUMFERENCE / 4
+
+REC_W = 200
+REC_H = 200
+
+LAT_ID_MAX = ceil(EARTH_CIRCUMFERENCE_1_4 / REC_H)
+LON_ID_MAX = ceil(EARTH_CIRCUMFERENCE_1_2 / REC_W)
 
 CLIENT_ID = "PHLMPJ4EJZB2QBQHZG2KUUTNNWZTLW4ZEJRRQI5VW5TLMRMI"
 CLIENT_SECRET = "A25MIXXIPP42RD1P4T4PMKZVIYE0OAUHHWX1PPB3YECAFQ4N"
@@ -145,6 +154,130 @@ def grade_distance(lat_a, lng_a, lat_b, lng_b):
         return 2
     else:
         return 1
+
+
+def get_id(coordinates):
+    """
+    Coordinates are processed and based on them function returns identification for this coordinates.
+    :param coordinates: Dictionary on latitude and longitude coordinates of given point.
+    :return: Dictionary of latitude and longitude identification numbers for processed rectangle.
+    """
+    d_lat = EARTH_CIRCUMFERENCE_1_4 * coordinates['lat'] / 90
+    d_lon = EARTH_CIRCUMFERENCE_1_2 * cos(radians(coordinates['lat'])) * coordinates['lon'] / 180
+    identification = {'lat': floor(d_lat / REC_W), 'lon': floor(d_lon / REC_H)}
+    return identification
+
+
+def get_coordinates_from_id(db_id):
+    """
+    Identification numbers of given rectangle are processed and coordinates of South-West point in given rectangle
+    are returned as result.
+    :param db_id: Dictionary containing latitude and longitude identification numbers.
+    :return: Dictionary containing latitude and longitude of South-West point in given rectangle.
+    """
+    print(db_id)
+    lat = 90 * db_id['lat'] / EARTH_CIRCUMFERENCE_1_4 * REC_H
+    lon = 180 * db_id['lon'] / (EARTH_CIRCUMFERENCE_1_2 * cos(radians(lat))) * REC_W
+
+    return {'lat': lat, 'lon': lon}
+
+
+def get_sw_ne_from_id(db_id):
+    """
+    Function that returns coordinates of South-West and North_East points based on latitude and longitude
+    identification numbers. (We call them database identification numbers).
+    :param db_id: Dictionary containing identification numbers of given rectangle.
+    :return: Dictionary, containing dictionaries defining SW and NE point of given rectangle.
+    """
+    sw = get_coordinates_from_id(db_id)
+    ne = get_coordinates_from_id({'lat': db_id['lat'] + 1, 'lon': db_id['lon'] + 1})
+    return {'sw': sw, 'ne': ne}
+
+
+def store_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
+    """
+    Function reads all POIs that are part of given categories and store them to list that is then returned.
+    :param ne_lat: North-East latitude.
+    :param ne_lng: North-East longitude.
+    :param sw_lat: South-West latitude.
+    :param sw_lng: South-West longitude.
+    :param categories: Identification list of categories required.
+    :return: List of results.
+    """
+
+    num_of_s = 0
+
+    # Testing data used for Barcelona demonstration event.
+    ref_cat = {
+        'Lunch': [
+             ('4bf58dd8d48988d147941735', '4bf58dd8d48988d117941735', '4bf58dd8d48988d1c4941735'),
+             ('4bf58dd8d48988d1c0941735', '4bf58dd8d48988d148941735', '4bf58dd8d48988d1db931735'),
+             ('4bf58dd8d48988d1c1941735', '4bf58dd8d48988d1d1941735', '4bf58dd8d48988d1ce941735'),
+             ('4bf58dd8d48988d150941735', '4bf58dd8d48988d16c941735', '4bf58dd8d48988d110941735'),
+             ('4f04af1f2fb6e1c99f3db0bb', '4bf58dd8d48988d17a941735', '4bf58dd8d48988d1c3941735'),
+             ('4bf58dd8d48988d1d2941735', '4bf58dd8d48988d111941735', '4bf58dd8d48988d1df931735'),
+             ('4bf58dd8d48988d1cb941735', '4bf58dd8d48988d16e941735', '4bf58dd8d48988d16f941735'),
+             ('4bf58dd8d48988d1ca941735', '4bf58dd8d48988d142941735', '4bf58dd8d48988d16a941735'),
+             ('52e81612bcbc57f1066b79f1', '52e81612bcbc57f1066b7a00', '5283c7b4e4b094cb91ec88d7'),
+             ('4bf58dd8d48988d1c7941735', '4bf58dd8d48988d150941735', '4bf58dd8d48988d1bd941735'),
+             ('4bf58dd8d48988d1a1941735', '4bf58dd8d48988d148941735', '4bf58dd8d48988d1d0941735'),
+             ('5283c7b4e4b094cb91ec88d4', '4bf58dd8d48988d1db931735')
+        ],
+
+        'Club and bar': [
+             ('4bf58dd8d48988d14b941735', '4bf58dd8d48988d117941735', '4bf58dd8d48988d11a941735'),
+             ('4bf58dd8d48988d116941735', '50327c8591d4c4b30a586d5d', '4bf58dd8d48988d1ca941735'),
+             ('4bf58dd8d48988d123951735', '4bf58dd8d48988d1c7941735', '4bf58dd8d48988d18e941735'),
+             ('4bf58dd8d48988d1e5931735', '4bf58dd8d48988d11e941735', '4bf58dd8d48988d11f941735')
+        ],
+
+        'Transport': [
+             ('4bf58dd8d48988d1fd931735', '52f2ab2ebcbc57f1066b8b51', '4bf58dd8d48988d1fe931735'),
+             ('4bf58dd8d48988d12b951735', '4bf58dd8d48988d130951735', '4e4c9077bd41f78e849722f9')
+        ],
+
+        'Entertainment': [
+            ('4bf58dd8d48988d137941735', '4bf58dd8d48988d181941735', '52e81612bcbc57f1066b79ee'),
+            ('4deefb944765f83613cdba6e', '4bf58dd8d48988d1e7941735', '4bf58dd8d48988d1e2931735'),
+            ('4bf58dd8d48988d164941735', '52e81612bcbc57f1066b7a25', '4bf58dd8d48988d12f941735'),
+            ('4bf58dd8d48988d191941735', '4bf58dd8d48988d163941735', '4bf58dd8d48988d1fd941735'),
+            ('4bf58dd8d48988d15e941735', '4bf58dd8d48988d1ed941735', '4bf58dd8d48988d1e5931735'),
+            ('4bf58dd8d48988d1e5941735', '4bf58dd8d48988d17f941735', '4bf58dd8d48988d1c9941735')
+        ],
+
+        'Morning': [
+            ('4bf58dd8d48988d1e0931735', '4bf58dd8d48988d147941735', '4bf58dd8d48988d16d941735'),
+            ('4bf58dd8d48988d143941735', '4c38df4de52ce0d596b336e1', '4bf58dd8d48988d175941735'),
+            ('4bf58dd8d48988d1c5941735', '4bf58dd8d48988d16a941735', '4bf58dd8d48988d1e5941735',
+             '4bf58dd8d48988d148941735')]
+        }
+
+    for key in ref_cat:
+        for tup in ref_cat[key]:
+            # Prepare data, convert identifications to list.
+            cat = []
+            for identification in tup:
+                cat.append(identification)
+
+            raw_data = extend(ne_lng, ne_lat, sw_lng, sw_lat, cat)
+
+            for row in raw_data:
+                info = {"fw_core": {"location": {"wgs84": {"latitude": row['geometry']['coordinates'][1],
+                                                           "longitude": row['geometry']['coordinates'][0]}},
+                                    "category": key,
+                                    "name": {"": row['properties']['name']},
+                                    "short_name": {"": row['properties']['name']},
+                                    "label": {"": row['properties']['category']},
+                                    "source": "foursquare"
+                                    }
+                        }
+                headers = {'content-type': 'application/json'}
+                response = requests.post('http://130.211.136.203/poi_dp/add_poi.php',
+                                         data=json.dumps(info), headers=headers)
+
+                if response.status_code == 200:
+                    num_of_s += 1
+    return num_of_s
 
 
 def get_poi(lat, lng, radius):
