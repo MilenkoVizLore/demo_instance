@@ -5,6 +5,7 @@ import json
 import requests
 
 from math import radians, cos, sin, atan2, sqrt, ceil, pi, floor
+from models import Area
 
 """ Global variables """
 EARTH_RADIUS = 6371500
@@ -280,6 +281,38 @@ def store_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
     return num_of_s
 
 
+def check_for_areas(area_list):
+    """
+    Check what area fields need to be stored to POI Data Provider, resulting in list of coordinates representing this
+    areas.
+    :param area_list: List of dictionaries, representing all areas needed for successful search to POI DP.
+    :return: List of North-East and South-West points representing this areas.
+    """
+    lst_needed = []
+    for area in area_list:
+        if not Area.objects.filter(lat_id=area.lat, lng_id=area.lon).exists():
+            lst_needed.append(area)
+    return lst_needed
+
+
+def store_to_areas(area_id_list):
+    """
+    Function that stores information for given area identification. Based of this identification, function gets
+    coordinates and then makes call to Foursquare API to collect data and store it to POI Data Provider.
+    :param area_id_list: List of area identification numbers.
+    :return: Number of stored POIs.
+    """
+    num_stored = 0
+    for area_id in area_id_list:
+        sw_ne = get_sw_ne_from_id(area_id)
+        num_stored += store_points_ne_sw(sw_ne['ne']['lat'], sw_ne['ne']['lon'], sw_ne['sw']['lat'], sw_ne['sw'][
+            'lon'], None)
+        # Store given rectangle as existing to database.
+        area = Area(lat=sw_ne['sw']['lat'], lon=sw_ne['sw']['lon'])
+        area.save()
+    return num_stored
+
+
 def get_poi(lat, lng, radius):
     """
     Search for points of interest on poi data provider, for the given search radius.
@@ -289,6 +322,15 @@ def get_poi(lat, lng, radius):
     :return: Returns points of interest database provider answer, dictionary of available points of interest in the
     given radius.
     """
+    # Check which area field we need.
+
+    # For given fields check if they are already in database.
+
+    # For those that are not stored in database, call Foursquare and store data, for them.
+
+
+
+    ''' Make a search in Point od Interest Data Provider for POI-s in given radius. '''
     url = 'http://104.154.38.236/poi_dp/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, radius)
     headers = dict()
     headers['Content-type'] = 'application/json'
