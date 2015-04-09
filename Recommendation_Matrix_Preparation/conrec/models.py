@@ -16,5 +16,5 @@ class Ignore(models.Model):
 
 
 class Area(models.Model):
-    lat_id = models.FloatField
-    lng_id = models.FloatField
+    lat_id = models.IntegerField()
+    lng_id = models.IntegerField()

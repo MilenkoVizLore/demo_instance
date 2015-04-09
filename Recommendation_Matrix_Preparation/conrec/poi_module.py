@@ -13,8 +13,10 @@ EARTH_CIRCUMFERENCE = EARTH_RADIUS * pi * 2
 EARTH_CIRCUMFERENCE_1_2 = EARTH_CIRCUMFERENCE / 2
 EARTH_CIRCUMFERENCE_1_4 = EARTH_CIRCUMFERENCE / 4
 
-REC_W = 200
-REC_H = 200
+RADIUS = 300
+
+REC_W = RADIUS
+REC_H = RADIUS
 
 LAT_ID_MAX = ceil(EARTH_CIRCUMFERENCE_1_4 / REC_H)
 LON_ID_MAX = ceil(EARTH_CIRCUMFERENCE_1_2 / REC_W)
@@ -24,6 +26,8 @@ CLIENT_SECRET = "A25MIXXIPP42RD1P4T4PMKZVIYE0OAUHHWX1PPB3YECAFQ4N"
 
 BASE_URL = "https://api.foursquare.com/v2/venues/search?client_id=%s&client_secret=%s&limit=50&intent=browse"\
            % (CLIENT_ID, CLIENT_SECRET)
+
+POI_DP_URL = "http://104.154.38.236/"
 
 
 def get_response(url):
@@ -53,7 +57,7 @@ def filter_result(data):
     for poi in data:
         new_data.append({"geometry":
                              {
-                                 "coordinates": [poi['location']['lng'], poi['location']['lng']]
+                                 "coordinates": [poi['location']['lng'], poi['location']['lat']]
                              },
                          "properties":
                              {
@@ -97,16 +101,16 @@ def extend(min_x, min_y, max_x, max_y, categories=None, search=None):
     modified as defined on Foursquare API.
     :param min_x: Longitude of South-West point.
     :param min_y: Latitude of South-West point.
-    :param max_x: Longitude of North-East point.
+    :param max_x: Longitude Requested setting DEFAULT_INDEX_TABLESPACE, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settingsof North-East point.
     :param max_y: Longitude of North-East point.
     :param categories: POI categories that we are interested in.
     :param search: Search term in form of string. NOTE: No spaces!
     :return: Filtered result from Foursquare API.
     """
     if search is None:
-        url = BASE_URL + "&v=20150101&sw=%f,%f&ne=%f,%f" % (min_x, min_y, max_x, max_y)
+        url = BASE_URL + "&v=20150101&sw=%f,%f&ne=%f,%f" % (min_y, min_x, max_y, max_x)
     else:
-        url = BASE_URL + "&v=20150101&sw=%f,%f&ne=%f,%f&search=%s" % (min_x, min_y, max_x, max_y, search)
+        url = BASE_URL + "&v=20150101&sw=%f,%f&ne=%f,%f&search=%s" % (min_y, min_x, max_y, max_x, search)
 
     if categories is not None:
         url_add = ""
@@ -160,39 +164,56 @@ def grade_distance(lat_a, lng_a, lat_b, lng_b):
 def get_id(coordinates):
     """
     Coordinates are processed and based on them function returns identification for this coordinates.
-    :param coordinates: Dictionary on latitude and longitude coordinates of given point.
-    :return: Dictionary of latitude and longitude identification numbers for processed rectangle.
+    :param coordinates: Dictionary on latitude and lnggitude coordinates of given point.
+    :return: Dictionary of latitude and lnggitude identification numbers for processed rectangle.
     """
-    d_lat = EARTH_CIRCUMFERENCE_1_4 * coordinates['lat'] / 90
-    d_lon = EARTH_CIRCUMFERENCE_1_2 * cos(radians(coordinates['lat'])) * coordinates['lon'] / 180
-    identification = {'lat': floor(d_lat / REC_W), 'lon': floor(d_lon / REC_H)}
-    return identification
+    lat_id = floor(EARTH_CIRCUMFERENCE_1_4 * coordinates['lat'] / 90 / REC_H)
+    lat = 90 * lat_id / EARTH_CIRCUMFERENCE_1_4 * REC_H
+    lng_id = floor(EARTH_CIRCUMFERENCE_1_2 * cos(radians(lat)) * coordinates['lng'] / 180 / REC_W)
+    return {'lat': lat_id, 'lng': lng_id}
 
 
-def get_coordinates_from_id(db_id):
+def get_sw_ne(db_id):
     """
-    Identification numbers of given rectangle are processed and coordinates of South-West point in given rectangle
-    are returned as result.
-    :param db_id: Dictionary containing latitude and longitude identification numbers.
-    :return: Dictionary containing latitude and longitude of South-West point in given rectangle.
+    Based on rectangle identification, function returns South-West and North-East points describing that rectangle.
+    :param db_id: Rectangle identification dictionary, containing two numbers.
+    :return: Dictionary containing two coordinate dictionaries.
     """
-    print(db_id)
-    lat = 90 * db_id['lat'] / EARTH_CIRCUMFERENCE_1_4 * REC_H
-    lon = 180 * db_id['lon'] / (EARTH_CIRCUMFERENCE_1_2 * cos(radians(lat))) * REC_W
+    lat_s = 90 * db_id['lat'] / EARTH_CIRCUMFERENCE_1_4 * REC_H
+    lng_w = 180 * db_id['lng'] / (EARTH_CIRCUMFERENCE_1_2 * cos(radians(lat_s))) * REC_W
+    lat_n = 90 * (db_id['lat'] + 1) / EARTH_CIRCUMFERENCE_1_4 * REC_H
+    lng_e = 180 * (db_id['lng'] + 1) / (EARTH_CIRCUMFERENCE_1_2 * cos(radians(lat_s))) * REC_W
+    return {'sw': {'lat': lat_s, 'lng': lng_w}, 'ne': {'lat': lat_n, 'lng': lng_e}}
 
-    return {'lat': lat, 'lon': lon}
 
+def get_ids(coordinates):
+    """
+    For given coordinates returns rectangle identification dictionaries that are candidates for circle intersection.
+    :param coordinates: Dictionary containing latitude and lnggitude of some point.
+    :return: List of dictionaries that represent nine rectangles that are candidates for circle intersection.
+    """
+    ids = []
+    center_id = get_id(coordinates)
+    sw_ne = get_sw_ne(center_id)
 
-def get_sw_ne_from_id(db_id):
-    """
-    Function that returns coordinates of South-West and North_East points based on latitude and longitude
-    identification numbers. (We call them database identification numbers).
-    :param db_id: Dictionary containing identification numbers of given rectangle.
-    :return: Dictionary, containing dictionaries defining SW and NE point of given rectangle.
-    """
-    sw = get_coordinates_from_id(db_id)
-    ne = get_coordinates_from_id({'lat': db_id['lat'] + 1, 'lon': db_id['lon'] + 1})
-    return {'sw': sw, 'ne': ne}
+    lat_dh = (sw_ne['ne']['lat'] - sw_ne['sw']['lat']) / 2
+
+    top_id = get_id({'lat': sw_ne['ne']['lat'] + lat_dh, 'lng': coordinates['lng']})
+    bot_id = get_id({'lat': sw_ne['sw']['lat'] - lat_dh, 'lng': coordinates['lng']})
+
+    ids.append(top_id)
+    ids.append({'lat': top_id['lat'], 'lng': top_id['lng'] - 1})
+    ids.append({'lat': top_id['lat'], 'lng': top_id['lng'] + 1})
+
+    ids.append(bot_id)
+    ids.append({'lat': bot_id['lat'], 'lng': bot_id['lng'] - 1})
+    ids.append({'lat': bot_id['lat'], 'lng': bot_id['lng'] + 1})
+
+    ids.append(center_id)
+    ids.append({'lat': center_id['lat'], 'lng': center_id['lng'] - 1})
+    ids.append({'lat': center_id['lat'], 'lng': center_id['lng'] + 1})
+
+    return ids
 
 
 def store_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
@@ -260,7 +281,7 @@ def store_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
             for identification in tup:
                 cat.append(identification)
 
-            raw_data = extend(ne_lng, ne_lat, sw_lng, sw_lat, cat)
+            raw_data = extend(sw_lng, sw_lat, ne_lng, ne_lat, cat)
 
             for row in raw_data:
                 info = {"fw_core": {"location": {"wgs84": {"latitude": row['geometry']['coordinates'][1],
@@ -272,10 +293,11 @@ def store_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
                                     "source": "foursquare"
                                     }
                         }
+                print info
                 headers = {'content-type': 'application/json'}
-                response = requests.post('http://130.211.136.203/poi_dp/add_poi.php',
+                response = requests.post(POI_DP_URL + 'poi_dp/add_poi.php',
                                          data=json.dumps(info), headers=headers)
-
+                print response.status_code
                 if response.status_code == 200:
                     num_of_s += 1
     return num_of_s
@@ -290,7 +312,7 @@ def check_for_areas(area_list):
     """
     lst_needed = []
     for area in area_list:
-        if not Area.objects.filter(lat_id=area.lat, lng_id=area.lon).exists():
+        if not Area.objects.filter(lat_id=area['lat'], lng_id=area['lng']).exists():
             lst_needed.append(area)
     return lst_needed
 
@@ -304,12 +326,12 @@ def store_to_areas(area_id_list):
     """
     num_stored = 0
     for area_id in area_id_list:
-        sw_ne = get_sw_ne_from_id(area_id)
-        num_stored += store_points_ne_sw(sw_ne['ne']['lat'], sw_ne['ne']['lon'], sw_ne['sw']['lat'], sw_ne['sw'][
-            'lon'], None)
-        # Store given rectangle as existing to database.
-        area = Area(lat=sw_ne['sw']['lat'], lon=sw_ne['sw']['lon'])
-        area.save()
+        sw_ne = get_sw_ne(area_id)
+        num_stored += store_points_ne_sw(sw_ne['ne']['lat'], sw_ne['ne']['lng'], sw_ne['sw']['lat'], sw_ne['sw'][
+            'lng'], None)
+
+        # Store given rectangle as existing to database. - ERROR
+        Area(lat_id=area_id['lat'], lng_id=area_id['lng']).save()
     return num_stored
 
 
@@ -323,15 +345,16 @@ def get_poi(lat, lng, radius):
     given radius.
     """
     # Check which area field we need.
-
-    # For given fields check if they are already in database.
-
+    lst_ids = get_ids({'lat': lat, 'lng': lng})
+    # For given fields check which are not in database.
+    needed_ids = check_for_areas(lst_ids)
     # For those that are not stored in database, call Foursquare and store data, for them.
-
-
+    num = store_to_areas(needed_ids)
+    print num
+    print "Andrej"
 
     ''' Make a search in Point od Interest Data Provider for POI-s in given radius. '''
-    url = 'http://104.154.38.236/poi_dp/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, radius)
+    url = POI_DP_URL + ('/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, radius))
     headers = dict()
     headers['Content-type'] = 'application/json'
 
@@ -346,3 +369,11 @@ def get_poi(lat, lng, radius):
         return poi['pois']
     else:
         return dict()
+
+import time
+
+
+def testing_function():
+    s = time.clock()
+    get_poi(45.254, 19.824, 300)
+    return time.clock() - s

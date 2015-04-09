@@ -4,6 +4,8 @@ from django.http import HttpResponse
 from django.views.generic import View
 
 from conrec.toolbox import get_recommendation
+# Testing
+from conrec.poi_module import testing_function
 
 
 class Recommend(View):
@@ -48,3 +50,8 @@ class Recommend(View):
         response = HttpResponse(data)
         response.status_code = 200
         return response
+
+
+class Test(View):
+    def get(self, request):
+        return HttpResponse(testing_function())
