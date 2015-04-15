@@ -5,6 +5,7 @@ import json
 import requests
 import re
 
+from threading import Thread
 from math import radians, cos, sin, atan2, sqrt, ceil, pi, floor
 from models import Area
 
@@ -29,6 +30,110 @@ BASE_URL = "https://api.foursquare.com/v2/venues/search?client_id=%s&client_secr
            % (CLIENT_ID, CLIENT_SECRET)
 
 POI_DP_URL = "http://localhost/poi_dp/"
+
+# Testing data used for Barcelona demonstration event.
+ref_cat = {
+    'Lunch': [
+
+        '4bf58dd8d48988d147941735', '4bf58dd8d48988d117941735', '4bf58dd8d48988d1c4941735',
+        '4bf58dd8d48988d1c0941735', '4bf58dd8d48988d148941735', '4bf58dd8d48988d1db931735',
+        '4bf58dd8d48988d1c1941735', '4bf58dd8d48988d1d1941735', '4bf58dd8d48988d1ce941735',
+        '4bf58dd8d48988d150941735', '4bf58dd8d48988d16c941735', '4bf58dd8d48988d110941735',
+        '4f04af1f2fb6e1c99f3db0bb', '4bf58dd8d48988d17a941735', '4bf58dd8d48988d1c3941735',
+        '4bf58dd8d48988d1d2941735', '4bf58dd8d48988d111941735', '4bf58dd8d48988d1df931735',
+        '4bf58dd8d48988d1cb941735', '4bf58dd8d48988d16e941735', '4bf58dd8d48988d16f941735',
+        '4bf58dd8d48988d1ca941735', '4bf58dd8d48988d142941735', '4bf58dd8d48988d16a941735',
+        '52e81612bcbc57f1066b79f1', '52e81612bcbc57f1066b7a00', '5283c7b4e4b094cb91ec88d7',
+        '4bf58dd8d48988d1c7941735', '4bf58dd8d48988d150941735', '4bf58dd8d48988d1bd941735',
+        '4bf58dd8d48988d1a1941735', '4bf58dd8d48988d148941735', '4bf58dd8d48988d1d0941735',
+        '5283c7b4e4b094cb91ec88d4', '4bf58dd8d48988d1db931735'
+    ],
+
+    'Club and bar': [
+        '4bf58dd8d48988d14b941735', '4bf58dd8d48988d117941735', '4bf58dd8d48988d11a941735',
+        '4bf58dd8d48988d116941735', '50327c8591d4c4b30a586d5d', '4bf58dd8d48988d1ca941735',
+        '4bf58dd8d48988d123951735', '4bf58dd8d48988d1c7941735', '4bf58dd8d48988d18e941735',
+        '4bf58dd8d48988d1e5931735', '4bf58dd8d48988d11e941735', '4bf58dd8d48988d11f941735'
+    ],
+
+    'Transport': [
+        '4bf58dd8d48988d1fd931735', '52f2ab2ebcbc57f1066b8b51', '4bf58dd8d48988d1fe931735',
+        '4bf58dd8d48988d12b951735', '4bf58dd8d48988d130951735', '4e4c9077bd41f78e849722f9'
+    ],
+
+    'Entertainment': [
+        '4bf58dd8d48988d137941735', '4bf58dd8d48988d181941735', '52e81612bcbc57f1066b79ee',
+        '4deefb944765f83613cdba6e', '4bf58dd8d48988d1e7941735', '4bf58dd8d48988d1e2931735',
+        '4bf58dd8d48988d164941735', '52e81612bcbc57f1066b7a25', '4bf58dd8d48988d12f941735',
+        '4bf58dd8d48988d191941735', '4bf58dd8d48988d163941735', '4bf58dd8d48988d1fd941735',
+        '4bf58dd8d48988d15e941735', '4bf58dd8d48988d1ed941735', '4bf58dd8d48988d1e5931735',
+        '4bf58dd8d48988d1e5941735', '4bf58dd8d48988d17f941735', '4bf58dd8d48988d1c9941735'
+    ],
+
+    'Morning': [
+        '4bf58dd8d48988d1e0931735', '4bf58dd8d48988d147941735', '4bf58dd8d48988d16d941735',
+        '4bf58dd8d48988d143941735', '4c38df4de52ce0d596b336e1', '4bf58dd8d48988d175941735',
+        '4bf58dd8d48988d1c5941735', '4bf58dd8d48988d16a941735', '4bf58dd8d48988d1e5941735',
+        '4bf58dd8d48988d148941735']
+}
+
+
+class GetFoursquareResponses(Thread):
+    """
+    This class is representing one thread sending request to Foursquare API and then processing received data and
+    storing the data to POI Data Provider database.
+    """
+    def __init__(self, key, ne_lat, ne_lng, sw_lat, sw_lng):
+        self.key = key
+        self.ne_lat = ne_lat
+        self.ne_lng = ne_lng
+        self.sw_lat = sw_lat
+        self.sw_lng = sw_lng
+        super(GetFoursquareResponses, self).__init__()
+
+    def run(self):
+        raw_data = extend(self.sw_lng, self.sw_lat, self.ne_lng, self.ne_lat, ref_cat[self.key])
+        print len(raw_data)
+        for row in raw_data:
+            info = {"fw_core": {"location": {"wgs84": {"latitude": row['geometry']['coordinates'][1],
+                                                       "longitude": row['geometry']['coordinates'][0]}},
+                                "category": self.key,
+                                "name": {"": row['properties']['name']},
+                                "short_name": {"": row['properties']['name']},
+                                "label": {"": row['properties']['category']},
+                                "source": "foursquare"
+                                }
+                    }
+
+            headers = {'content-type': 'application/json'}
+            response = requests.post(POI_DP_URL + 'add_poi.php', data=json.dumps(info), headers=headers)
+
+            if response.status_code == 400:
+                string = re.sub('[^A-Za-z0-9| |.]+', '', row['properties']['name'])
+                split = string.split()
+                info['fw_core']['name'] = {"": split[0] + " " + split[1] + " " + split[2]}
+                info['fw_core']['short_name'] = {"": split[0]}
+
+                response = requests.post(POI_DP_URL + 'add_poi.php', data=json.dumps(info), headers=headers)
+                if response.status_code != 200:
+                    print "Error!"
+
+
+class GetGivenRectangles(Thread):
+    """
+    This class represents thread requesting POIs for given area.
+    """
+    def __init__(self, area_id):
+        self.area_id = area_id
+        super(GetGivenRectangles, self).__init__()
+
+    def run(self):
+        sw_ne = get_sw_ne(self.area_id)
+        store_points_ne_sw(sw_ne['ne']['lat'], sw_ne['ne']['lng'], sw_ne['sw']['lat'], sw_ne['sw'][
+            'lng'], None)
+
+        # Store given rectangle as existing to database.
+        Area(lat_id=self.area_id['lat'], lng_id=self.area_id['lng']).save()
 
 
 def get_response(url):
@@ -220,90 +325,15 @@ def store_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
     :param sw_lat: South-West latitude.
     :param sw_lng: South-West longitude.
     :param categories: Identification list of categories required.
-    :return: List of results.
     """
-
-    num_of_s = 0
-
-    # Testing data used for Barcelona demonstration event.
-    ref_cat = {
-        'Lunch': [
-
-            '4bf58dd8d48988d147941735', '4bf58dd8d48988d117941735', '4bf58dd8d48988d1c4941735',
-            '4bf58dd8d48988d1c0941735', '4bf58dd8d48988d148941735', '4bf58dd8d48988d1db931735',
-            '4bf58dd8d48988d1c1941735', '4bf58dd8d48988d1d1941735', '4bf58dd8d48988d1ce941735',
-            '4bf58dd8d48988d150941735', '4bf58dd8d48988d16c941735', '4bf58dd8d48988d110941735',
-            '4f04af1f2fb6e1c99f3db0bb', '4bf58dd8d48988d17a941735', '4bf58dd8d48988d1c3941735',
-            '4bf58dd8d48988d1d2941735', '4bf58dd8d48988d111941735', '4bf58dd8d48988d1df931735',
-            '4bf58dd8d48988d1cb941735', '4bf58dd8d48988d16e941735', '4bf58dd8d48988d16f941735',
-            '4bf58dd8d48988d1ca941735', '4bf58dd8d48988d142941735', '4bf58dd8d48988d16a941735',
-            '52e81612bcbc57f1066b79f1', '52e81612bcbc57f1066b7a00', '5283c7b4e4b094cb91ec88d7',
-            '4bf58dd8d48988d1c7941735', '4bf58dd8d48988d150941735', '4bf58dd8d48988d1bd941735',
-            '4bf58dd8d48988d1a1941735', '4bf58dd8d48988d148941735', '4bf58dd8d48988d1d0941735',
-            '5283c7b4e4b094cb91ec88d4', '4bf58dd8d48988d1db931735'
-        ],
-
-        'Club and bar': [
-            '4bf58dd8d48988d14b941735', '4bf58dd8d48988d117941735', '4bf58dd8d48988d11a941735',
-            '4bf58dd8d48988d116941735', '50327c8591d4c4b30a586d5d', '4bf58dd8d48988d1ca941735',
-            '4bf58dd8d48988d123951735', '4bf58dd8d48988d1c7941735', '4bf58dd8d48988d18e941735',
-            '4bf58dd8d48988d1e5931735', '4bf58dd8d48988d11e941735', '4bf58dd8d48988d11f941735'
-        ],
-
-        'Transport': [
-            '4bf58dd8d48988d1fd931735', '52f2ab2ebcbc57f1066b8b51', '4bf58dd8d48988d1fe931735',
-            '4bf58dd8d48988d12b951735', '4bf58dd8d48988d130951735', '4e4c9077bd41f78e849722f9'
-        ],
-
-        'Entertainment': [
-            '4bf58dd8d48988d137941735', '4bf58dd8d48988d181941735', '52e81612bcbc57f1066b79ee',
-            '4deefb944765f83613cdba6e', '4bf58dd8d48988d1e7941735', '4bf58dd8d48988d1e2931735',
-            '4bf58dd8d48988d164941735', '52e81612bcbc57f1066b7a25', '4bf58dd8d48988d12f941735',
-            '4bf58dd8d48988d191941735', '4bf58dd8d48988d163941735', '4bf58dd8d48988d1fd941735',
-            '4bf58dd8d48988d15e941735', '4bf58dd8d48988d1ed941735', '4bf58dd8d48988d1e5931735',
-            '4bf58dd8d48988d1e5941735', '4bf58dd8d48988d17f941735', '4bf58dd8d48988d1c9941735'
-        ],
-
-        'Morning': [
-            '4bf58dd8d48988d1e0931735', '4bf58dd8d48988d147941735', '4bf58dd8d48988d16d941735',
-            '4bf58dd8d48988d143941735', '4c38df4de52ce0d596b336e1', '4bf58dd8d48988d175941735',
-            '4bf58dd8d48988d1c5941735', '4bf58dd8d48988d16a941735', '4bf58dd8d48988d1e5941735',
-            '4bf58dd8d48988d148941735']
-        }
-
+    threads = []
     for key in ref_cat:
-        num_of_s += 1
+        t = GetFoursquareResponses(key, ne_lat, ne_lng, sw_lat, sw_lng)
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join()
 
-        raw_data = extend(sw_lng, sw_lat, ne_lng, ne_lat, ref_cat[key])
-
-        for row in raw_data:
-            info = {"fw_core": {"location": {"wgs84": {"latitude": row['geometry']['coordinates'][1],
-                                                       "longitude": row['geometry']['coordinates'][0]}},
-                                "category": key,
-                                "name": {"": row['properties']['name']},
-                                "short_name": {"": row['properties']['name']},
-                                "label": {"": row['properties']['category']},
-                                "source": "foursquare"
-                                }
-                    }
-
-            headers = {'content-type': 'application/json'}
-            response = requests.post(POI_DP_URL + 'add_poi.php', data=json.dumps(info), headers=headers)
-
-            if response.status_code == 200:
-                num_of_s += 1
-
-            elif response.status_code == 400:
-                string = re.sub('[^A-Za-z0-9| |.]+', '', row['properties']['name'])
-                split = string.split()
-                info['fw_core']['name'] = {"": split[0] + " " + split[1] + " " + split[2]}
-                info['fw_core']['short_name'] = {"": split[0]}
-
-                response = requests.post(POI_DP_URL + 'add_poi.php', data=json.dumps(info), headers=headers)
-
-                if response.status_code == 200:
-                    num_of_s += 1
-    return num_of_s
 
 def check_for_areas(area_list):
     """
@@ -324,17 +354,14 @@ def store_to_areas(area_id_list):
     Function that stores information for given area identification. Based of this identification, function gets
     coordinates and then makes call to Foursquare API to collect data and store it to POI Data Provider.
     :param area_id_list: List of area identification numbers.
-    :return: Number of stored POIs.
     """
-    num_stored = 0
+    threads = []
     for area_id in area_id_list:
-        sw_ne = get_sw_ne(area_id)
-        num_stored += store_points_ne_sw(sw_ne['ne']['lat'], sw_ne['ne']['lng'], sw_ne['sw']['lat'], sw_ne['sw'][
-            'lng'], None)
-
-        # Store given rectangle as existing to database.
-        Area(lat_id=area_id['lat'], lng_id=area_id['lng']).save()
-    return num_stored
+        t = GetGivenRectangles(area_id)
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join()
 
 
 def get_poi(lat, lng, distance):
@@ -350,10 +377,11 @@ def get_poi(lat, lng, distance):
     lst_ids = get_ids({'lat': lat, 'lng': lng})
     # For given fields check which are not in database.
     needed_ids = check_for_areas(lst_ids)
+    # Here we need to ask our self if we have enough time to fetch and store these POIs, if not we will only store
+    # POIs that are in and around central area field.
+    """ Working on this part. """
     # For those that are not stored in database, call Foursquare and store data, for them.
-    num = store_to_areas(needed_ids)
-    print num
-
+    store_to_areas(needed_ids)
     ''' Make a search in Point od Interest Data Provider for POI-s in given radius. '''
     url = POI_DP_URL + ('/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, distance))
     headers = dict()
@@ -373,5 +401,4 @@ def get_poi(lat, lng, distance):
 
 
 def testing_function():
-    get_poi(45.253, 19.836, 300)
-    return 1.21
+    return len(get_poi(45.256, 19.846, 300))
