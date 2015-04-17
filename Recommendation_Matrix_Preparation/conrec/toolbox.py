@@ -2,9 +2,13 @@ import datetime
 import urllib2
 import json
 import operator
+import requests
+import re
+import time
 
+from threading import Thread
 from conrec.models import Ignore
-from conrec.poi_module import get_poi, grade_distance
+from conrec.poi_module import get_poi, grade_distance, POI_DP_URL
 
 '''                  Walking          Sitting         Standing          Default                  '''
 lookup_table = [[[2, 5, 1, 1, 4], [3, 4, 1, 1, 4], [3, 4, 1, 1, 4], [3, 5, 1, 1, 4]],  # Morning
@@ -13,6 +17,30 @@ lookup_table = [[[2, 5, 1, 1, 4], [3, 4, 1, 1, 4], [3, 4, 1, 1, 4], [3, 5, 1, 1,
                 [[3, 1, 5, 4, 4], [2, 1, 4, 4, 4], [2, 1, 4, 4, 4], [2, 1, 4, 4, 4]],  # Evening
                 [[1, 1, 1, 5, 5], [1, 1, 1, 4, 5], [1, 1, 1, 4, 5], [1, 1, 1, 4, 5]]]  # Night
 '''               [ Free time,    Morning,    Lunch,    Bar,    Transport ]                      '''
+
+
+class WritePOIToDatabase(Thread):
+    """
+    This class represents thread requesting POIs for given area.
+    """
+    def __init__(self, poi_lst):
+        self.poi_lst = poi_lst
+        super(WritePOIToDatabase, self).__init__()
+
+    def run(self):
+        for row in self.poi_lst:
+            headers = {'content-type': 'application/json'}
+            response = requests.post(POI_DP_URL + 'add_poi.php', data=json.dumps(row), headers=headers)
+
+            if response.status_code == 400:
+                string = re.sub('[^A-Za-z0-9| |.]+', '', row['fw_core']['name'].get(""))
+                split = string.split()
+                row['fw_core']['name'] = {"": split[0] + " " + split[1] + " " + split[2]}
+                row['fw_core']['short_name'] = {"": split[0]}
+
+                response = requests.post(POI_DP_URL + 'add_poi.php', data=json.dumps(row), headers=headers)
+                if response.status_code != 200:
+                    print "Error!"
 
 
 def get_time_section(milliseconds):
@@ -137,6 +165,16 @@ def get_ignored_for_current_user(user_id):
     return lst_ignored
 
 
+def make_chunks(lst, n):
+    """
+    Function making chunks from given list. Number of chunks is defined by parameter.
+    :param lst: List of data.
+    :param n: Number of chunks to be created.
+    :return: Returns list of lists.
+    """
+    return [lst[i::n] for i in xrange(n)]
+
+
 def get_recommendation(time_stamp, coordinates, user_id, ignore):
     """
     Main handler function for recommend.
@@ -146,44 +184,70 @@ def get_recommendation(time_stamp, coordinates, user_id, ignore):
     :param ignore: Identification of POI user ignored from previous recommend.
     :return: Dictionary representing answer for request to recommend.
     """
-    ''' Get all required data. '''
-    part_of_day = get_time_section(time_stamp)
-    act_rest_answer = get_user_activity(user_id)
-    if 'error' in act_rest_answer:
-        activity = 3  # If activity recognition provider encountered some error.
-    else:
-        req_act = dict()
-        for k, v in act_rest_answer['svm_vector'].iteritems():
-            req_act[k] = float(v)
-        activity = get_curr_activity(req_act)
-
     ''' Get all POIs in radius of 300 meters from user. '''
     points_of_interest = get_poi(coordinates['lat'], coordinates['lon'], 300)
-    poi_dict = {}
 
-    ''' Get id of all poi and rate them based on activity, context and distance. '''
-    for key, val in points_of_interest.iteritems():
-        f_res = lookup_table[part_of_day][activity][decode_category(val['fw_core']['category'])]
-        s_res = grade_distance(coordinates['lat'], coordinates['lon'], val['fw_core']['location']['wgs84'][
-            'latitude'], val['fw_core']['location']['wgs84']['longitude'])
-        poi_dict[key] = f_res * s_res
-
-    ''' Slice out ignored. '''
-    if ignore != 'None' and ignore in poi_dict:
-        save_ignored_for_current_user(user_id, ignore)
-
-    ignored = get_ignored_for_current_user(user_id)
-    for ig_poi in ignored:
-        if ig_poi in poi_dict:
-            del poi_dict[ig_poi]
-
-    ''' Sort POIs based on grades and return first 15 elements. '''
-    sort_poi_lst = sorted(poi_dict.items(), key=operator.itemgetter(1), reverse=True)
-    ret_dict = {"POIS": [], "activity": decode_activity(activity)}
-    if len(sort_poi_lst) > 5:
-        n_it = 5
+    # First we have to assign writing jobs to threads.
+    length = len(points_of_interest[1])
+    print length
+    if length < 50:
+        chunk_lst = make_chunks(points_of_interest[1], int(length/10) + 1)
     else:
-        n_it = len(sort_poi_lst)
-    for num in range(0, n_it):
-        ret_dict['POIS'].append({sort_poi_lst[num][0]: points_of_interest[sort_poi_lst[num][0]]})
-    return ret_dict
+        chunk_lst = make_chunks(points_of_interest[1], 5)
+
+    threads = []
+    start = time.time()
+    for chunk in chunk_lst:
+        t = WritePOIToDatabase(chunk)
+        threads.append(t)
+        t.start()
+
+    # # Concatenate existing list to make them accessible for recommendation part.
+    #
+    # poi_dict = {}
+    #
+    # ''' Get all required data. '''
+    # part_of_day = get_time_section(time_stamp)
+    # act_rest_answer = get_user_activity(user_id)
+    # if 'error' in act_rest_answer:
+    #     activity = 3  # If activity recognition provider encountered some error.
+    # else:
+    #     req_act = dict()
+    #     for k, v in act_rest_answer['svm_vector'].iteritems():
+    #         req_act[k] = float(v)
+    #     activity = get_curr_activity(req_act)
+    #
+    # ''' Get id of all poi and rate them based on activity, context and distance. '''
+    # for key, val in points_of_interest.iteritems():
+    #     f_res = lookup_table[part_of_day][activity][decode_category(val['fw_core']['category'])]
+    #     s_res = grade_distance(coordinates['lat'], coordinates['lon'], val['fw_core']['location']['wgs84'][
+    #         'latitude'], val['fw_core']['location']['wgs84']['longitude'])
+    #     poi_dict[key] = f_res * s_res
+    #
+    # ''' Slice out ignored. '''
+    # if ignore != 'None' and ignore in poi_dict:
+    #     save_ignored_for_current_user(user_id, ignore)
+    #
+    # ignored = get_ignored_for_current_user(user_id)
+    # for ig_poi in ignored:
+    #     if ig_poi in poi_dict:
+    #         del poi_dict[ig_poi]
+    #
+    # ''' Sort POIs based on grades and return first 15 elements. '''
+    # sort_poi_lst = sorted(poi_dict.items(), key=operator.itemgetter(1), reverse=True)
+    # ret_dict = {"POIS": [], "activity": decode_activity(activity)}
+    # if len(sort_poi_lst) > 5:
+    #     n_it = 5
+    # else:
+    #     n_it = len(sort_poi_lst)
+    # for num in range(0, n_it):
+    #     ret_dict['POIS'].append({sort_poi_lst[num][0]: points_of_interest[sort_poi_lst[num][0]]})
+
+    # Wait until all threads finish the job.
+    for thread in threads:
+        thread.join()
+
+
+    print ("Waited: %s" % (time.time() - start))
+
+    return {"Andrej": 123}

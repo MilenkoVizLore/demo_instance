@@ -54,4 +54,5 @@ class Recommend(View):
 
 class Test(View):
     def get(self, request):
-        return HttpResponse(testing_function())
+        dict_res = get_recommendation(1429260495, {'lat': 45.2555, 'lon': 19.8454321}, "vfdjv36q9347fdvgsdv", None)
+        return HttpResponse("Testing")

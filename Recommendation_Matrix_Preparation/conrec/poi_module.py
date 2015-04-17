@@ -1,9 +1,6 @@
 """ This file contains all functions that works with coordinates or with Points of Interest. """
-
 import urllib2
 import json
-import requests
-import re
 
 from threading import Thread
 from math import radians, cos, sin, atan2, sqrt, ceil, pi, floor
@@ -84,6 +81,7 @@ class GetFoursquareResponses(Thread):
     storing the data to POI Data Provider database.
     """
     def __init__(self, key, ne_lat, ne_lng, sw_lat, sw_lng):
+        self.results = []
         self.key = key
         self.ne_lat = ne_lat
         self.ne_lng = ne_lng
@@ -93,7 +91,7 @@ class GetFoursquareResponses(Thread):
 
     def run(self):
         raw_data = extend(self.sw_lng, self.sw_lat, self.ne_lng, self.ne_lat, ref_cat[self.key])
-        print len(raw_data)
+
         for row in raw_data:
             info = {"fw_core": {"location": {"wgs84": {"latitude": row['geometry']['coordinates'][1],
                                                        "longitude": row['geometry']['coordinates'][0]}},
@@ -104,19 +102,7 @@ class GetFoursquareResponses(Thread):
                                 "source": "foursquare"
                                 }
                     }
-
-            headers = {'content-type': 'application/json'}
-            response = requests.post(POI_DP_URL + 'add_poi.php', data=json.dumps(info), headers=headers)
-
-            if response.status_code == 400:
-                string = re.sub('[^A-Za-z0-9| |.]+', '', row['properties']['name'])
-                split = string.split()
-                info['fw_core']['name'] = {"": split[0] + " " + split[1] + " " + split[2]}
-                info['fw_core']['short_name'] = {"": split[0]}
-
-                response = requests.post(POI_DP_URL + 'add_poi.php', data=json.dumps(info), headers=headers)
-                if response.status_code != 200:
-                    print "Error!"
+            self.results.append(info)
 
 
 class GetGivenRectangles(Thread):
@@ -124,13 +110,15 @@ class GetGivenRectangles(Thread):
     This class represents thread requesting POIs for given area.
     """
     def __init__(self, area_id):
+        self.results = []
         self.area_id = area_id
         super(GetGivenRectangles, self).__init__()
 
     def run(self):
         sw_ne = get_sw_ne(self.area_id)
-        store_points_ne_sw(sw_ne['ne']['lat'], sw_ne['ne']['lng'], sw_ne['sw']['lat'], sw_ne['sw'][
-            'lng'], None)
+        self.results.append(
+            get_points_ne_sw(sw_ne['ne']['lat'], sw_ne['ne']['lng'], sw_ne['sw']['lat'], sw_ne['sw']['lng'], None)
+        )
 
         # Store given rectangle as existing to database.
         Area(lat_id=self.area_id['lat'], lng_id=self.area_id['lng']).save()
@@ -166,21 +154,21 @@ def filter_result(data):
     return new_data
 
 
-def radius(lat, lon, distance, categories=None, search=None):
+def radius(lat, lon, dist, categories=None, search=None):
     """
     Defines how to use radius search on Foursquare API. User just needs to provide data, everything else will be
     modified as defined on Foursquare API.
     :param lat: Latitude of center point.
     :param lon: Longitude of center point.
-    :param distance: Distance from center point defining a search region.
+    :param dist: Distance from center point defining a search region.
     :param categories: POI categories that we are interested in.
     :param search: Search term in form of string. NOTE: No spaces!
     :return: Filtered result from Foursquare API.
     """
     if search is None:
-        url = BASE_URL + "&radius=%d&v=20150101&ll=%f,%f" % (distance, lat, lon)
+        url = BASE_URL + "&radius=%d&v=20150101&ll=%f,%f" % (dist, lat, lon)
     else:
-        url = BASE_URL + "&radius=%d&v=20150101&ll=%f,%f&search=%s" % (distance, lat, lon, search)
+        url = BASE_URL + "&radius=%d&v=20150101&ll=%f,%f&search=%s" % (dist, lat, lon, search)
 
     if categories is not None:
         url_add = ""
@@ -251,12 +239,12 @@ def grade_distance(lat_a, lng_a, lat_b, lng_b):
     :param lng_b: Longitude of point B.
     :return: Returns grade for given distance.
     """
-    distance = distance_between_gps_coordinates(lat_a, lng_a, lat_b, lng_b)
-    if distance <= 10:
+    dist = distance_between_gps_coordinates(lat_a, lng_a, lat_b, lng_b)
+    if dist <= 10:
         return 5
-    elif distance <= 50:
+    elif dist <= 50:
         return 3
-    elif distance <= 200:
+    elif dist <= 200:
         return 2
     else:
         return 1
@@ -287,37 +275,98 @@ def get_sw_ne(db_id):
     return {'sw': {'lat': lat_s, 'lng': lng_w}, 'ne': {'lat': lat_n, 'lng': lng_e}}
 
 
+def distance(point_a, point_b):
+    """
+    Calculates distance between two GPS points described with two dictionaries.
+    :param point_a: Dictionary containing latitude and longitude of given point.
+    :param point_b: Dictionary containing latitude and longitude of given point.
+    :return: Distance between points in meters.
+    """
+    d_lng = radians(point_b['lng'] - point_a['lng'])
+    d_lat = radians(point_b['lat'] - point_a['lat'])
+    a = sin(d_lat/2)**2 + cos(radians(point_a['lat'])) * cos(radians(point_b['lat'])) * sin(d_lng/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+    return EARTH_RADIUS * c
+
+
+def center(rect):
+    """
+    Calculate coordinates of central point inside given rectangle.
+    :param rect: Dictionary representing North-East and South-West points of given rectangle area.
+    :return: Dictionary (containing latitude and longitude) describing central point of given rectangle area.
+    """
+    return {'lat': (rect['sw']['lat'] + rect['ne']['lat']) / 2, 'lng': (rect['sw']['lng'] + rect['ne']['lng']) / 2}
+
+
 def get_ids(coordinates):
     """
     For given coordinates returns rectangle identification dictionaries that are candidates for circle intersection.
     :param coordinates: Dictionary containing latitude and longitude of some point.
     :return: List of dictionaries that represent nine rectangles that are candidates for circle intersection.
     """
+    size = int (ceil(float(RADIUS) / min(REC_H, REC_W)))
     ids = []
     center_id = get_id(coordinates)
-    sw_ne = get_sw_ne(center_id)
+    center_sq = get_sw_ne(center_id)
 
-    lat_dh = (sw_ne['ne']['lat'] - sw_ne['sw']['lat']) / 2
-
-    top_id = get_id({'lat': sw_ne['ne']['lat'] + lat_dh, 'lng': coordinates['lng']})
-    bot_id = get_id({'lat': sw_ne['sw']['lat'] - lat_dh, 'lng': coordinates['lng']})
-
-    ids.append(top_id)
-    ids.append({'lat': top_id['lat'], 'lng': top_id['lng'] - 1})
-    ids.append({'lat': top_id['lat'], 'lng': top_id['lng'] + 1})
-
-    ids.append(bot_id)
-    ids.append({'lat': bot_id['lat'], 'lng': bot_id['lng'] - 1})
-    ids.append({'lat': bot_id['lat'], 'lng': bot_id['lng'] + 1})
+    lat_dh = (center_sq['ne']['lat'] - center_sq['sw']['lat']) / 2
 
     ids.append(center_id)
-    ids.append({'lat': center_id['lat'], 'lng': center_id['lng'] - 1})
-    ids.append({'lat': center_id['lat'], 'lng': center_id['lng'] + 1})
+    for j in range(1, size + 1):
+        # West
+        identification = {'lat': center_id['lat'], 'lng': center_id['lng'] - j}
+        sq = get_sw_ne(identification)
+        if distance(coordinates, center(sq)) <= RADIUS:
+            ids.append(identification)
 
+        # East
+        identification = {'lat': center_id['lat'], 'lng': center_id['lng'] + j}
+        sq = get_sw_ne(identification)
+        if distance(coordinates, center(sq)) <= RADIUS:
+            ids.append(identification)
+
+        top_sq = center_sq.copy()
+        bot_sq = center_sq.copy()
+
+    for i in range(0, size):
+        top_id = get_id({'lat': top_sq['ne']['lat'] + lat_dh, 'lng': coordinates['lng']})
+        bot_id = get_id({'lat': bot_sq['sw']['lat'] - lat_dh, 'lng': coordinates['lng']})
+        top_sq = get_sw_ne(top_id)
+        bot_sq = get_sw_ne(bot_id)
+        if distance(coordinates, center(top_sq)) <= RADIUS:
+            ids.append(top_id)
+
+        if distance(coordinates, center(bot_sq)) <= RADIUS:
+            ids.append(bot_id)
+
+        for j in range(1, size + 1):
+            # North-West
+            identification = {'lat': top_id['lat'], 'lng': top_id['lng'] - j}
+            sq = get_sw_ne(identification)
+            if distance(coordinates, center(sq)) <= RADIUS:
+                ids.append(identification)
+
+            # North-East
+            identification = {'lat': top_id['lat'], 'lng': top_id['lng'] + j}
+            sq = get_sw_ne(identification)
+            if distance(coordinates, center(sq)) <= RADIUS:
+                ids.append(identification)
+
+            # South-West
+            identification = {'lat': bot_id['lat'], 'lng': bot_id['lng'] - j}
+            sq = get_sw_ne(identification)
+            if distance(coordinates, center(sq)) <= RADIUS:
+                ids.append(identification)
+
+            # South-East
+            identification = {'lat': bot_id['lat'], 'lng': bot_id['lng'] + j}
+            sq = get_sw_ne(identification)
+            if distance(coordinates, center(sq)) <= RADIUS:
+                ids.append(identification)
     return ids
 
 
-def store_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
+def get_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
     """
     Function reads all POIs that are part of given categories and store them to list that is then returned.
     :param ne_lat: North-East latitude.
@@ -325,14 +374,20 @@ def store_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
     :param sw_lat: South-West latitude.
     :param sw_lng: South-West longitude.
     :param categories: Identification list of categories required.
+    :returns result: List of result from all threads.
     """
     threads = []
+    results = []
     for key in ref_cat:
         t = GetFoursquareResponses(key, ne_lat, ne_lng, sw_lat, sw_lng)
         threads.append(t)
         t.start()
     for t in threads:
         t.join()
+        for row in t.results:
+            results.append(row)
+    return results
+
 
 
 def check_for_areas(area_list):
@@ -356,12 +411,18 @@ def store_to_areas(area_id_list):
     :param area_id_list: List of area identification numbers.
     """
     threads = []
+    results = []
     for area_id in area_id_list:
         t = GetGivenRectangles(area_id)
         threads.append(t)
         t.start()
     for t in threads:
         t.join()
+        print len(t.results)
+        for lst in t.results:
+            for row in lst:
+                results.append(row)
+    return results
 
 
 def get_poi(lat, lng, distance):
@@ -377,17 +438,15 @@ def get_poi(lat, lng, distance):
     lst_ids = get_ids({'lat': lat, 'lng': lng})
     # For given fields check which are not in database.
     needed_ids = check_for_areas(lst_ids)
-    # Here we need to ask our self if we have enough time to fetch and store these POIs, if not we will only store
-    # POIs that are in and around central area field.
-    """ Working on this part. """
     # For those that are not stored in database, call Foursquare and store data, for them.
-    store_to_areas(needed_ids)
+    poi_list = store_to_areas(needed_ids)
     ''' Make a search in Point od Interest Data Provider for POI-s in given radius. '''
     url = POI_DP_URL + ('/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, distance))
     headers = dict()
     headers['Content-type'] = 'application/json'
 
     result = None
+    read_list = []
     try:
         request = urllib2.Request(url, None, headers=headers)
         result = urllib2.urlopen(request, timeout=10).read()
@@ -395,10 +454,16 @@ def get_poi(lat, lng, distance):
         return dict()
     poi = json.loads(result)
     if 'pois' in poi and len(poi['pois']) > 0:
-        return poi['pois']
+        read_list = poi['pois']
     else:
-        return dict()
+        read_list = dict()
+
+    return [read_list, poi_list]
 
 
 def testing_function():
-    return len(get_poi(45.256, 19.846, 300))
+    return get_poi(45.2555, 19.8454321, 300)
+
+
+def check_function():
+    print "This should be print out after data is served to consumer."
