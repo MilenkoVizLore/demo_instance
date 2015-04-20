@@ -4,7 +4,6 @@ import json
 import operator
 import requests
 import re
-import time
 
 from threading import Thread
 from conrec.models import Ignore
@@ -105,7 +104,6 @@ def get_user_activity(user_id):
     :return: Returns answer from activity recognition provider.
     """
     url = 'http://130.211.136.203:8080/ac/?ac=1&uuid=%s&alg=svm&fs=standard&tp=600' % user_id
-    # url = 'http://89.216.30.67:55555/ac/?ac=1&uuid=%s&alg=svm&fs=standard&tp=600' % user_id
     headers = dict()
     headers['Accept'] = 'application/json'
     result = None
@@ -189,25 +187,27 @@ def get_recommendation(time_stamp, coordinates, user_id, ignore):
 
     # First we have to assign writing jobs to threads.
     length = len(points_of_interest[1])
-    print length
-    if length < 50:
+
+    if length < 100:
         chunk_lst = make_chunks(points_of_interest[1], int(length/10) + 1)
     else:
-        chunk_lst = make_chunks(points_of_interest[1], 5)
+        chunk_lst = make_chunks(points_of_interest[1], 8)
 
     threads = []
-    start = time.time()
     for chunk in chunk_lst:
         t = WritePOIToDatabase(chunk)
         threads.append(t)
         t.start()
 
-    # # Concatenate existing list to make them accessible for recommendation part.
-    #
-    # poi_dict = {}
-    #
-    # ''' Get all required data. '''
-    # part_of_day = get_time_section(time_stamp)
+    poi_lst_of_dict = points_of_interest[0]
+    for i in range(0, len(points_of_interest[1])):
+        poi_lst_of_dict.update({('some-temporary-key %d' % (i+1)): points_of_interest[1][i]})
+
+    poi_dict = dict()
+
+    ''' Get all required data. '''
+    part_of_day = get_time_section(time_stamp)
+
     # act_rest_answer = get_user_activity(user_id)
     # if 'error' in act_rest_answer:
     #     activity = 3  # If activity recognition provider encountered some error.
@@ -216,38 +216,37 @@ def get_recommendation(time_stamp, coordinates, user_id, ignore):
     #     for k, v in act_rest_answer['svm_vector'].iteritems():
     #         req_act[k] = float(v)
     #     activity = get_curr_activity(req_act)
-    #
-    # ''' Get id of all poi and rate them based on activity, context and distance. '''
-    # for key, val in points_of_interest.iteritems():
-    #     f_res = lookup_table[part_of_day][activity][decode_category(val['fw_core']['category'])]
-    #     s_res = grade_distance(coordinates['lat'], coordinates['lon'], val['fw_core']['location']['wgs84'][
-    #         'latitude'], val['fw_core']['location']['wgs84']['longitude'])
-    #     poi_dict[key] = f_res * s_res
-    #
-    # ''' Slice out ignored. '''
-    # if ignore != 'None' and ignore in poi_dict:
-    #     save_ignored_for_current_user(user_id, ignore)
-    #
-    # ignored = get_ignored_for_current_user(user_id)
-    # for ig_poi in ignored:
-    #     if ig_poi in poi_dict:
-    #         del poi_dict[ig_poi]
-    #
-    # ''' Sort POIs based on grades and return first 15 elements. '''
-    # sort_poi_lst = sorted(poi_dict.items(), key=operator.itemgetter(1), reverse=True)
-    # ret_dict = {"POIS": [], "activity": decode_activity(activity)}
-    # if len(sort_poi_lst) > 5:
-    #     n_it = 5
-    # else:
-    #     n_it = len(sort_poi_lst)
-    # for num in range(0, n_it):
-    #     ret_dict['POIS'].append({sort_poi_lst[num][0]: points_of_interest[sort_poi_lst[num][0]]})
+    activity = 0
+
+    ''' Get id of all poi and rate them based on activity, context and distance. '''
+    for key, val in poi_lst_of_dict.iteritems():
+        f_res = lookup_table[part_of_day][activity][decode_category(val['fw_core']['category'])]
+        s_res = grade_distance(coordinates['lat'], coordinates['lon'],
+                               val['fw_core']['location']['wgs84']['latitude'],
+                               val['fw_core']['location']['wgs84']['longitude'])
+        poi_dict[key] = f_res * s_res
+
+    ''' Slice out ignored. '''
+    if ignore != 'None' and ignore in poi_dict:
+        save_ignored_for_current_user(user_id, ignore)
+
+    ignored = get_ignored_for_current_user(user_id)
+    for ig_poi in ignored:
+        if ig_poi in poi_dict:
+            del poi_dict[ig_poi]
+
+    ''' Sort POIs based on grades and return first 5 elements. '''
+    sort_poi_lst = sorted(poi_dict.items(), key=operator.itemgetter(1), reverse=True)
+    ret_dict = {"POIS": [], "activity": decode_activity(activity)}
+    if len(sort_poi_lst) > 5:
+        n_it = 5
+    else:
+        n_it = len(sort_poi_lst)
+    for num in range(0, n_it):
+        ret_dict['POIS'].append({sort_poi_lst[num][0]: poi_lst_of_dict[sort_poi_lst[num][0]]})
 
     # Wait until all threads finish the job.
     for thread in threads:
         thread.join()
 
-
-    print ("Waited: %s" % (time.time() - start))
-
-    return {"Andrej": 123}
+    return ret_dict

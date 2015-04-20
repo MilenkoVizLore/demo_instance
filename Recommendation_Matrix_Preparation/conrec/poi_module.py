@@ -418,7 +418,6 @@ def store_to_areas(area_id_list):
         t.start()
     for t in threads:
         t.join()
-        print len(t.results)
         for lst in t.results:
             for row in lst:
                 results.append(row)
@@ -459,11 +458,3 @@ def get_poi(lat, lng, distance):
         read_list = dict()
 
     return [read_list, poi_list]
-
-
-def testing_function():
-    return get_poi(45.2555, 19.8454321, 300)
-
-
-def check_function():
-    print "This should be print out after data is served to consumer."

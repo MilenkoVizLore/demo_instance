@@ -4,8 +4,6 @@ from django.http import HttpResponse
 from django.views.generic import View
 
 from conrec.toolbox import get_recommendation
-# Testing
-from conrec.poi_module import testing_function
 
 
 class Recommend(View):
@@ -55,4 +53,4 @@ class Recommend(View):
 class Test(View):
     def get(self, request):
         dict_res = get_recommendation(1429260495, {'lat': 45.2555, 'lon': 19.8454321}, "vfdjv36q9347fdvgsdv", None)
-        return HttpResponse("Testing")
+        return HttpResponse(str(dict_res))
