@@ -20,8 +20,9 @@ REC_H = RADIUS
 LAT_ID_MAX = ceil(EARTH_CIRCUMFERENCE_1_4 / REC_H)
 LON_ID_MAX = ceil(EARTH_CIRCUMFERENCE_1_2 / REC_W)
 
-CLIENT_ID = "PHLMPJ4EJZB2QBQHZG2KUUTNNWZTLW4ZEJRRQI5VW5TLMRMI"
-CLIENT_SECRET = "A25MIXXIPP42RD1P4T4PMKZVIYE0OAUHHWX1PPB3YECAFQ4N"
+# NOTE: Use your own CLIENT_ID and CLIENT_SECRET to communicate with Foursquare. 
+CLIENT_ID = ""
+CLIENT_SECRET = ""
 
 BASE_URL = "https://api.foursquare.com/v2/venues/search?client_id=%s&client_secret=%s&limit=50&intent=browse"\
            % (CLIENT_ID, CLIENT_SECRET)
