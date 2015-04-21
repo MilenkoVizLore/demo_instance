@@ -208,15 +208,14 @@ def get_recommendation(time_stamp, coordinates, user_id, ignore):
     ''' Get all required data. '''
     part_of_day = get_time_section(time_stamp)
 
-    # act_rest_answer = get_user_activity(user_id)
-    # if 'error' in act_rest_answer:
-    #     activity = 3  # If activity recognition provider encountered some error.
-    # else:
-    #     req_act = dict()
-    #     for k, v in act_rest_answer['svm_vector'].iteritems():
-    #         req_act[k] = float(v)
-    #     activity = get_curr_activity(req_act)
-    activity = 0
+    act_rest_answer = get_user_activity(user_id)
+    if 'error' in act_rest_answer:
+        activity = 3  # If activity recognition provider encountered some error.
+    else:
+        req_act = dict()
+        for k, v in act_rest_answer['svm_vector'].iteritems():
+            req_act[k] = float(v)
+        activity = get_curr_activity(req_act)
 
     ''' Get id of all poi and rate them based on activity, context and distance. '''
     for key, val in poi_lst_of_dict.iteritems():
