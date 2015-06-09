@@ -51,4 +51,4 @@ ADD . /code/
 RUN service mysql start && pip install -r requirements.txt
 RUN service mysql start restart && mysql -u root --password=vizlore -e "create database conrec" && python manage.py makemigrations && python manage.py migrate
 EXPOSE 4545
-ENTRYPOINT /code/run_server.sh
+CMD /code/run_server.sh
