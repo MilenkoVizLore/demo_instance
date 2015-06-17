@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+	<!--link rel="stylesheet/less" href="less/bootstrap.less" type="text/css" /-->
+	<!--link rel="stylesheet/less" href="less/responsive.less" type="text/css" /-->
+	<!--script src="js/less-1.3.3.min.js"></script-->
+	<!--append ‘#!watch’ to the browser URL, then refresh the page. -->
+	
+	<link href="static/css/bootstrap.min.css" rel="stylesheet">
+	<link href="static/css/style.css" rel="stylesheet">
+
+  <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+  <!--[if lt IE 9]>
+    <script src="js/html5shiv.js"></script>
+  <![endif]-->
+
+  <!-- Fav and touch icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="static/img/apple-touch-icon-144-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="static/img/apple-touch-icon-114-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="static/img/apple-touch-icon-72-precomposed.png">
+  <link rel="apple-touch-icon-precomposed" href="static/img/apple-touch-icon-57-precomposed.png">
+  <link rel="shortcut icon" href="static/img/favicon.png">
+  
+	<script type="text/javascript" src="static/js/jquery.min.js"></script>
+	<script type="text/javascript" src="static/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="static/js/scripts.js"></script>
+</head>
+
+<body>
+<div class="container">
+	<div class="row clearfix">
+		<div class="col-md-12 column">
+			<div class="row clearfix">
+				<div class="col-md-6 column">
+					<img alt="140x140" class="img-responsive" src="static/img/fic.jpg">
+				</div>
+				<div class="col-md-6 column">
+					<img class="right img-responsive" alt="140x140" src="static/img/lci.png">
+				</div>
+			</div>
+			<h3>
+				Description and Guide
+			</h3>
+			<div class="row clearfix border">
+				<div class="col-md-8 column">
+					<dl>
+						<dt>
+							Description
+						</dt>
+						<dd>
+
+<p>
+Since modern mobile devices accompany their owners throughout the day and during all day-to-day activities, analyzing contextual/sensory data collected from them can be used for precise recognition of user's activity and context which is invaluable for proper decision making in Smart City content delivery services.
+</p>
+<p>
+The POI recommendation is the main communication channel for engaging end users of smart city guide - like applications. The Context Aware Recommendation SE enables developers to recognize user's activity and put it into context. This knowledge is used to modify weights in recommendation matrices so that end user's activity and context is properly addressed through POI recommendation.
+</p>
+<p>
+The Activity and Context Recognition module is used for classification and recognition of user's activity and context based on contextual and sensory data provided by mobile devices wearables. The Recommendation Matrix Preparation module uses knowledge of user's context and activity and POI attributes (collected from open POI repositories) to adapt weights of POI recommendation matrix. This way the POI recommendation is adapted to end user activity and context. Additionally, as part of the solution we also provide the mobile application module which collects contextual data from mobile devices (location, SSIDs of surrounding WiFi networks and sensory data) and WiFi APs (user's utilization of the WiFi internet access). As alternative, developers can use the Orion Publish/Subscribe Context Broker GE for obtaining contextual and sensory data from mobile devices and wearables. 
+</p>
+
+<p>
+Use the Android demo application for testing the main functionality of the SE through a simple smart city guide which recommends POIs (collected from the Foursquare API) based on your activity and context. By tapping the “Recommend” button at the bottom you will be recommended with 5 POIs of the relevant category based on your current activity and location. In the settings of the application you can specify base URL for the Activity and Context Recognition module and Recommendation Matrix Preparation module of the SE if you have deployed them yourself. Also, you can choose to pause the sensory data stream (please note that the sensory data stream start as soon as you run the application and will not stop until you exit the application or stop it manually in the settings).
+</p>
+
+			<a href="http://mediafi.org/?portfolio=context-aware-recommendation#tab-terms-conditions"> Terms and conditions </a> </br>
+
+			<a href="https://github.com/VizLoreLabs/LCI-FIC2-SE"> Source code </a></br>
+
+			<a href="http://mediafi.org/?portfolio=context-aware-recommendation"> More information </a></br>
+
+			<a href="https://github.com/VizLoreLabs/LCI-FIC2-SE/blob/master/Mobile_App_Module/FIC2.apk"> Android application </a></br>
+			
+			<form action="http://89.216.30.67:8089/">
+				<input type="submit" value="Activity recognition">
+			</form>
+			<form action="http://89.216.30.67:4545/test/">
+				<input type="submit" value="Recommendation matrix prepartaion">
+			</form>
+			</dd>
+					</dl>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

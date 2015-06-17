@@ -1,0 +1,16 @@
+.right{
+	float: right;
+}
+.left{
+	float: left;
+}
+.border{
+	border: 1px solid #ccc;
+	border-radius: 5px;
+}
+.p50{
+	padding-top: 30px;
+}
+.w300{
+	width: 300px;
+}
