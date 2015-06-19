@@ -28,4 +28,4 @@ RUN  python generate_enhanced_classifier.py
 RUN  python generate_enhanced_classifier_acceleration.py
 WORKDIR /code/ActivityRecognition/
 EXPOSE 8089
-ENTRYPOINT /code/ActivityRecognition/run_server.sh
+CMD /code/ActivityRecognition/run_server.sh
