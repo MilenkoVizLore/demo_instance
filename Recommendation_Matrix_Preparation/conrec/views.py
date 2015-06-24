@@ -5,6 +5,7 @@ from django.views.generic import View
 from django.shortcuts import render
 
 from conrec.toolbox import get_recommendation
+from conrec.poi_module import get_subcategories
 
 
 class Recommend(View):
@@ -56,6 +57,7 @@ class Test(View):
         return HttpResponse(str(dict_res))
 
 
-class Matrix(View):
+class Categories(View):
     def get(self, request):
-        return render(request, 'matrix.html')
+        categories = get_subcategories()
+        return HttpResponse(json.dumps(categories), content_type="application/json")

@@ -21,3 +21,8 @@ class Keys(models.Model):
     temp = models.CharField(max_length=60)
     real = models.CharField(max_length=40)
     time = models.DateTimeField(auto_now=True, auto_now_add=False)
+
+
+class RecommendationMatrix(models.Model):
+    name = models.CharField(max_length=60)
+    data = models.CharField(max_length=1024)

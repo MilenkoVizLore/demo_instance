@@ -27,6 +27,9 @@ CLIENT_SECRET = "A25MIXXIPP42RD1P4T4PMKZVIYE0OAUHHWX1PPB3YECAFQ4N"
 BASE_URL = "https://api.foursquare.com/v2/venues/search?client_id=%s&client_secret=%s&limit=50&intent=browse"\
            % (CLIENT_ID, CLIENT_SECRET)
 
+CATEGORIES_BASE_URL = "https://api.foursquare.com/v2/venues/categories?client_id=%s&client_secret=%s&v=20150101"\
+                      % (CLIENT_ID, CLIENT_SECRET)
+
 POI_DP_URL = "http://localhost/poi_dp/"
 
 # Testing data used for Barcelona demonstration event.
@@ -458,3 +461,27 @@ def fetch_poi(lat, lng, distance):
         read_list = dict()
 
     return [read_list, poi_list]
+
+
+def get_foursquare_categories():
+    """
+    Add Foursquare categories to database
+    :return: content of Foursquare API response
+    """
+    request = urllib2.Request(CATEGORIES_BASE_URL, None)
+    result = urllib2.urlopen(request, None, timeout=10)
+    if result.code == 200:
+        response = json.loads(result.read())
+        return response['response']['categories']
+
+    return None
+
+
+def get_subcategories():
+    categories = get_foursquare_categories()
+    categories_lst = []
+    for cat in categories:
+        for sub_cat in cat['categories']:
+            categories_lst.append({sub_cat['name']: sub_cat['id']})
+
+    return categories_lst
