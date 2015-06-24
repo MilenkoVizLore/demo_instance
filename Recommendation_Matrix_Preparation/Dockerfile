@@ -1,7 +1,7 @@
 FROM ubuntu
 ENV PYTHONUNBUFFERED 1
 RUN sed -i -- 's/101/0/g' /usr/sbin/policy-rc.d
-RUN mkdir /code && apt-get update && apt-get install -y sqlite3 && apt-get install -y python-pip
+RUN mkdir /code && apt-get update && apt-get install -y python-pip
 
 RUN apt-get install -y postgresql postgresql-contrib postgis postgresql-.*-postgis
 
