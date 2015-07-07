@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 <html class="ng-scope" ng-app="phonecatApp" lang="en"><head>
-  <meta charset="utf-8">
-  <title>Vizlore</title>
-  <script src="index_files/angular.js"></script>
-  <script src="index_files/controllers.js"></script>
-  <script src="index_files/angular-checklist-model.js"></script>
+	<meta charset="utf-8">
+	<title>Vizlore</title>
+	<script src="index_files/angular.js"></script>
+	<script src="index_files/controllers.js"></script>
+	<script src="index_files/angular-checklist-model.js"></script>
+	<script src="index_files/js/metro.min.js"></script>
 
-  <script src="index_files/js/metro.min.js"></script>
-  <link href="index_files/css/metro.min.css" rel="stylesheet">
-  <link href="index_files/css/metro-icons.min.css" rel="stylesheet">
+	<script src="index_files/angular-sanitize.js"></script>
+	<script src="index_files/js/select.js"></script>
+
+	<link href="index_files/css/metro.min.css" rel="stylesheet">
+	<link href="index_files/css/metro-icons.min.css" rel="stylesheet">
+
+	<link href="index_files/css/select.css" rel="stylesheet">
+	<link href="index_files/css/select2.css" rel="stylesheet">
+	<link href="index_files/css/selectize.default.css" rel="stylesheet">
+
 </head>
 <body ng-controller="PhoneListCtrl">
 
@@ -25,7 +33,15 @@
 			</div>
 		</td>
 		<td>
-			<select name="fs_names" ng-options="item.code as item.name for item in foursquare" multiple ng-multiple="true" ng-model="category.foursquare"></select>
+			<ui-select multiple ng-model="category.foursquare" theme="select2" style="width: 800px;">
+				<ui-select-match placeholder="Select category...">{{$item.name}}</ui-select-match>
+				<ui-select-choices repeat="item.id as item in foursquare | filter:$select.search">
+				<div ng-bind-html="item.name | highlight: $select.search"></div>
+				<small>
+					Category id: {{item.id}}
+				</small>
+				</ui-select-choices>
+			</ui-select>
 		</td>
 	</tr>
 </table>

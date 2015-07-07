@@ -2,23 +2,24 @@
 
 /* Controllers */
 
-var phonecatApp = angular.module('phonecatApp', ["checklist-model"]);
+var phonecatApp = angular.module('phonecatApp', ["checklist-model",'ngSanitize', 'ui.select']);
 
 phonecatApp.controller('PhoneListCtrl', function($scope, $http) {
 
 
   $scope.foursquare = [
-    {'name': 'Nexus S1','code': 'asdaweqw'},
-	{'name': 'Nexus S2','code': 'asdaweqw'},
-	{'name': 'Nexus S3','code': 'asdaweqw'},
-	{'name': 'Nexus S4','code': 'asdaweqw'},
-    {'name': 'Nexus S5','code': 'asdaweqw'},
-    {'name': 'Nexus S6','code': 'asdaweqw'},
-	{'name': 'Nexus S7','code': 'asdaweqw'},
-	{'name': 'Nexus S8','code': 'asdaweqw'},
-	{'name': 'Nexus S9','code': 'asdaweqw'},
-    {'name': 'Nexus S10','code': 'asdaweqw'}
+    {'name': 'Nexus S1','id': 'asdaweqw1'},
+	{'name': 'Nexus S2','id': 'asdaweqw2'},
+	{'name': 'Nexus S3','id': 'asdaweqw3'},
+	{'name': 'Nexus S4','id': 'asdaweqw4'},
+    {'name': 'Nexus S5','id': 'asdaweqw5'},
+    {'name': 'Nexus S6','id': 'asdaweqw6'},
+	{'name': 'Nexus S7','id': 'asdaweqw7'},
+	{'name': 'Nexus S8','id': 'asdaweqw8'},
+	{'name': 'Nexus S9','id': 'asdaweqw9'},
+    {'name': 'Nexus S10','id': 'asdaweqw10'}
 	];
+
 
 	$http.get('../categories').
 	success(function(data, status, headers, config)
