@@ -478,10 +478,14 @@ def get_foursquare_categories():
 
 
 def get_subcategories():
+    """
+    Reads Foursquare category hierarchy and sends second level to user.
+    :return: List containing dictionaries representing Foursquare subcategories.<
+    """
     categories = get_foursquare_categories()
     categories_lst = []
     for cat in categories:
         for sub_cat in cat['categories']:
-            categories_lst.append({sub_cat['name']: sub_cat['id']})
+            categories_lst.append({"name": sub_cat['name'], "id": sub_cat['id']})
 
     return categories_lst
