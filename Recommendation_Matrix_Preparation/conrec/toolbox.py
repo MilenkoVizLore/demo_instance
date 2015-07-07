@@ -240,10 +240,10 @@ def get_recommendation(matrix_name, time_stamp, coordinates, user_id, ignore):
     :return: Dictionary representing answer for request to recommend.
     """
     # Get all POIs in radius of 300 meters from user.
-    points_of_interest = fetch_poi(coordinates['lat'], coordinates['lon'], 300)
+    recommendation_matrix = read_matrix(matrix_name)
+    points_of_interest = fetch_poi(recommendation_matrix['categories'], coordinates['lat'], coordinates['lon'], 300)
 
     # First we have to prepare necessary variables.
-    recommendation_matrix = read_matrix(matrix_name)
     length = len(points_of_interest[1])
     poi_dict = dict()
 
@@ -265,7 +265,6 @@ def get_recommendation(matrix_name, time_stamp, coordinates, user_id, ignore):
     act_rest_answer = get_user_activity(user_id)
     if 'error' in act_rest_answer:
         activity = get_default_activity_index(recommendation_matrix['activities'])
-        print activity
     else:
         req_act = dict()
         for k, v in act_rest_answer['svm_vector'].iteritems():

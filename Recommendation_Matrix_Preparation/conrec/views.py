@@ -2,6 +2,7 @@ import json
 
 from django.http import HttpResponse
 from django.views.generic import View
+from django.shortcuts import render
 from conrec.toolbox import get_recommendation
 from conrec.poi_module import get_subcategories
 
@@ -52,7 +53,7 @@ class Recommend(View):
 
 class Test(View):
     def get(self, request):
-        dict_res = get_recommendation('LaCitadelle', 1429260495, {'lat': 45.2555, 'lon': 19.8454321},
+        dict_res = get_recommendation('LaCitadelle', 1429260495, {'lat': 45.254, 'lon': 19.824},
                                       "vfdjv36q9347fdvgsdv", None)
         return HttpResponse(str(dict_res))
 
@@ -65,11 +66,10 @@ class Categories(View):
 
 class Matrix(View):
     def post(self, request):
-        recommendation_matrix = request.raw_post_data
+        recommendation_matrix = request.body
+        print "MATRIX: " + recommendation_matrix
         # Hint, save request to database.
         response_data = 'We received your data'
         response = HttpResponse(response_data)
         response.status_code == 200
         return response
-
-

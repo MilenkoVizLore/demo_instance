@@ -32,61 +32,15 @@ CATEGORIES_BASE_URL = "https://api.foursquare.com/v2/venues/categories?client_id
 
 POI_DP_URL = "http://localhost/poi_dp/"
 
-# Testing data used for Barcelona demonstration event.
-ref_cat = {
-    'Lunch': [
-
-        '4bf58dd8d48988d147941735', '4bf58dd8d48988d117941735', '4bf58dd8d48988d1c4941735',
-        '4bf58dd8d48988d1c0941735', '4bf58dd8d48988d148941735', '4bf58dd8d48988d1db931735',
-        '4bf58dd8d48988d1c1941735', '4bf58dd8d48988d1d1941735', '4bf58dd8d48988d1ce941735',
-        '4bf58dd8d48988d150941735', '4bf58dd8d48988d16c941735', '4bf58dd8d48988d110941735',
-        '4f04af1f2fb6e1c99f3db0bb', '4bf58dd8d48988d17a941735', '4bf58dd8d48988d1c3941735',
-        '4bf58dd8d48988d1d2941735', '4bf58dd8d48988d111941735', '4bf58dd8d48988d1df931735',
-        '4bf58dd8d48988d1cb941735', '4bf58dd8d48988d16e941735', '4bf58dd8d48988d16f941735',
-        '4bf58dd8d48988d1ca941735', '4bf58dd8d48988d142941735', '4bf58dd8d48988d16a941735',
-        '52e81612bcbc57f1066b79f1', '52e81612bcbc57f1066b7a00', '5283c7b4e4b094cb91ec88d7',
-        '4bf58dd8d48988d1c7941735', '4bf58dd8d48988d150941735', '4bf58dd8d48988d1bd941735',
-        '4bf58dd8d48988d1a1941735', '4bf58dd8d48988d148941735', '4bf58dd8d48988d1d0941735',
-        '5283c7b4e4b094cb91ec88d4', '4bf58dd8d48988d1db931735'
-    ],
-
-    'Club and bar': [
-        '4bf58dd8d48988d14b941735', '4bf58dd8d48988d117941735', '4bf58dd8d48988d11a941735',
-        '4bf58dd8d48988d116941735', '50327c8591d4c4b30a586d5d', '4bf58dd8d48988d1ca941735',
-        '4bf58dd8d48988d123951735', '4bf58dd8d48988d1c7941735', '4bf58dd8d48988d18e941735',
-        '4bf58dd8d48988d1e5931735', '4bf58dd8d48988d11e941735', '4bf58dd8d48988d11f941735'
-    ],
-
-    'Transport': [
-        '4bf58dd8d48988d1fd931735', '52f2ab2ebcbc57f1066b8b51', '4bf58dd8d48988d1fe931735',
-        '4bf58dd8d48988d12b951735', '4bf58dd8d48988d130951735', '4e4c9077bd41f78e849722f9'
-    ],
-
-    'Entertainment': [
-        '4bf58dd8d48988d137941735', '4bf58dd8d48988d181941735', '52e81612bcbc57f1066b79ee',
-        '4deefb944765f83613cdba6e', '4bf58dd8d48988d1e7941735', '4bf58dd8d48988d1e2931735',
-        '4bf58dd8d48988d164941735', '52e81612bcbc57f1066b7a25', '4bf58dd8d48988d12f941735',
-        '4bf58dd8d48988d191941735', '4bf58dd8d48988d163941735', '4bf58dd8d48988d1fd941735',
-        '4bf58dd8d48988d15e941735', '4bf58dd8d48988d1ed941735', '4bf58dd8d48988d1e5931735',
-        '4bf58dd8d48988d1e5941735', '4bf58dd8d48988d17f941735', '4bf58dd8d48988d1c9941735'
-    ],
-
-    'Morning': [
-        '4bf58dd8d48988d1e0931735', '4bf58dd8d48988d147941735', '4bf58dd8d48988d16d941735',
-        '4bf58dd8d48988d143941735', '4c38df4de52ce0d596b336e1', '4bf58dd8d48988d175941735',
-        '4bf58dd8d48988d1c5941735', '4bf58dd8d48988d16a941735', '4bf58dd8d48988d1e5941735',
-        '4bf58dd8d48988d148941735']
-}
-
-
 class GetFoursquareResponses(Thread):
     """
     This class is representing one thread sending request to Foursquare API and then processing received data and
     storing the data to POI Data Provider database.
     """
-    def __init__(self, key, ne_lat, ne_lng, sw_lat, sw_lng):
+    def __init__(self, category, ne_lat, ne_lng, sw_lat, sw_lng):
         self.results = []
-        self.key = key
+        self.key = (category.keys())[0]
+        self.category_list = (category.values())[0]
         self.ne_lat = ne_lat
         self.ne_lng = ne_lng
         self.sw_lat = sw_lat
@@ -94,7 +48,7 @@ class GetFoursquareResponses(Thread):
         super(GetFoursquareResponses, self).__init__()
 
     def run(self):
-        raw_data = extend(self.sw_lng, self.sw_lat, self.ne_lng, self.ne_lat, ref_cat[self.key])
+        raw_data = extend(self.sw_lng, self.sw_lat, self.ne_lng, self.ne_lat, self.category_list)
 
         for row in raw_data:
             info = {"fw_core": {"location": {"wgs84": {"latitude": row['geometry']['coordinates'][1],
@@ -113,15 +67,18 @@ class GetGivenRectangles(Thread):
     """
     This class represents thread requesting POIs for given area.
     """
-    def __init__(self, area_id):
+    def __init__(self, categories, area_id):
         self.results = []
         self.area_id = area_id
+        self.categories = categories
         super(GetGivenRectangles, self).__init__()
 
     def run(self):
         sw_ne = get_sw_ne(self.area_id)
         self.results.append(
-            get_points_ne_sw(sw_ne['ne']['lat'], sw_ne['ne']['lng'], sw_ne['sw']['lat'], sw_ne['sw']['lng'], None)
+            get_points_ne_sw(sw_ne['ne']['lat'], sw_ne['ne']['lng'],
+                             sw_ne['sw']['lat'], sw_ne['sw']['lng'],
+                             self.categories)
         )
 
         # Store given rectangle as existing to database.
@@ -382,8 +339,8 @@ def get_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
     """
     threads = []
     results = []
-    for key in ref_cat:
-        t = GetFoursquareResponses(key, ne_lat, ne_lng, sw_lat, sw_lng)
+    for cat in categories:
+        t = GetFoursquareResponses(cat, ne_lat, ne_lng, sw_lat, sw_lng)
         threads.append(t)
         t.start()
     for t in threads:
@@ -407,16 +364,17 @@ def check_for_areas(area_list):
     return lst_needed
 
 
-def store_to_areas(area_id_list):
+def store_to_areas(categories_list, area_id_list):
     """
     Function that stores information for given area identification. Based of this identification, function gets
     coordinates and then makes call to Foursquare API to collect data and store it to POI Data Provider.
+    :param categories_list: List of categories defined in recommendation matrix.
     :param area_id_list: List of area identification numbers.
     """
     threads = []
     results = []
     for area_id in area_id_list:
-        t = GetGivenRectangles(area_id)
+        t = GetGivenRectangles(categories_list, area_id)
         threads.append(t)
         t.start()
     for t in threads:
@@ -427,24 +385,26 @@ def store_to_areas(area_id_list):
     return results
 
 
-def fetch_poi(lat, lng, distance):
+def fetch_poi(categories_list, lat, lng, stretch):
     """
     Search for points of interest on poi data provider, for the given search radius.
     :param lat: Latitude of center point.
     :param lng: Longitude of center point.
-    :param distance: Search radius.
+    :param stretch: Search radius.
     :return: Returns points of interest database provider answer, dictionary of available points of interest in the
     given radius.
     """
     # Check which area field we need.
     lst_ids = get_ids({'lat': lat, 'lng': lng})
+
     # For given fields check which are not in database.
     needed_ids = check_for_areas(lst_ids)
-    # For those that are not stored in database, call Foursquare and store data, for them.
-    poi_list = store_to_areas(needed_ids)
 
-    ''' Make a search in Point od Interest Data Provider for POI-s in given radius. '''
-    url = POI_DP_URL + ('/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, distance))
+    # For those that are not stored in database, call Foursquare and store data, for them.
+    poi_list = store_to_areas(categories_list ,needed_ids)
+
+    # Make a search in Point od Interest Data Provider for POI-s in given radius.
+    url = POI_DP_URL + ('/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, stretch))
     headers = dict()
     headers['Content-type'] = 'application/json'
     result = None

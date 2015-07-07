@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html class="ng-scope" ng-app="phonecatApp" lang="en"><head>
+  <meta charset="utf-8">
+  <title>Vizlore</title>
+  <script src="index_files/angular.js"></script>
+  <script src="index_files/controllers.js"></script>
+  <script src="index_files/angular-checklist-model.js"></script>
+
+  <script src="index_files/js/metro.min.js"></script>
+  <link href="index_files/css/metro.min.css" rel="stylesheet">
+  <link href="index_files/css/metro-icons.min.css" rel="stylesheet">
+</head>
+<body ng-controller="PhoneListCtrl">
+
+<div>
+<h2>Define content/POI category</h2>
+<table class="table striped hovered cell-hovered border bordered">
+	<tr ng-repeat="category in categories">
+		<td>
+			<label for="name">Category Name</label>
+		</td>
+		<td>
+			<div class="input-control text">
+				<input type="text" name="name" ng-model="category.name"/>
+			</div>
+		</td>
+		<td>
+			<select name="fs_names" ng-options="item.code as item.name for item in foursquare" multiple ng-multiple="true" ng-model="category.foursquare"></select>
+		</td>
+	</tr>
+</table>
+
+<button class="button success block-shadow-success text-shadow" ng-click="addCategories()">Add Category</button>
+<button class="button danger block-shadow-danger text-shadow" ng-click="removeCategories()">Remove Category</button>
+</div>
+
+<div>
+	<h2>Define context and activity profiles</h2>
+	<table ng-repeat="ti in time_intervals" class="table striped hovered cell-hovered border bordered">
+		<tr>
+			<td>
+				<label for="name">Interval Name</label>
+			</td>
+			<td>
+				<input type="number" name="ti_start_m" ng-model="$scope.time_interval_names[$index]"/>
+			</td>
+
+			<td>
+				<label for="ti_start_h">Start Inteval Hours</label>
+			</td>
+
+			<td>
+				<input type="number" name="ti_start_h" ng-model="ti[0]"/>
+			</td>
+
+			<td>
+				<label for="ti_start_m">Start Interval Minutes</label>
+			</td>
+
+			<td>
+				<input type="number" name="ti_start_m" ng-model="ti[1]"/>
+			</td>
+
+			<td>
+				<label for="ti_end_h">End Inteval Hours</label>
+			</td>
+
+			<td>
+				<input type="number" name="ti_end_h" ng-model="ti[2]"/>
+			</td>
+
+			<td>
+				<label for="ti_end_m">End Interval Minutes</label>
+			</td>
+
+			<td>
+				<input type="number" name="ti_end_m" ng-model="ti[3]">
+			</td>
+		</tr>
+	</table>
+
+	<button class="button success block-shadow-success text-shadow" ng-click="addInterval()"> Add Time interval</button>
+	<button class="button danger block-shadow-danger text-shadow" ng-click="removeInterval()">Remove Time interval</button>
+
+<div>
+
+<div>
+	<h2>Select activities you want to use! </h2>
+
+	<label ng-repeat="activity in activities" class="input-control padding10 checkbox small-check">
+		<input ng-change="allocateMatrix()" checklist-model="selected_activities" checklist-value="activity" type="checkbox" checked>
+		<span class="check"></span>
+		<span class="caption">{{activity}}</span>
+	</label>
+</div>
+
+<div>
+	<h2>Recommendation Matrix</h2>
+	<table class="table striped hovered cell-hovered border bordered">
+
+	<tr>
+		<th colspan="2"></th>
+		<th ng-repeat="c in categories">{{c.name}}</th>
+	</tr>
+
+	<tr class="tr-for" ng-repeat-start="ti in time_intervals"></tr>
+		<th rowspan="{{selected_activities.length + 1}}">{{time_interval_names[$index]}}</th>
+		<tr ng-repeat-start="act in selected_activities" ng-repeat-end>
+			<th>{{act}}</th>		
+			<td ng-repeat="c in categories"><input ng-model="matrix[$parent.$index + selected_activities.length * $parent.$parent.$index][$index]" type="text"> </input></td>
+		</tr>
+	<tr class="tr-end" ng-repeat-end></tr>
+
+	</table>
+</div>
+
+<button class="button success block-shadow-success text-shadow" ng-click="post()">Send data </button>
+
+<p>
+{{categories|json}}
+</p>
+
+<p>
+{{time_intervals|json}}
+</p>
+<p>
+{{selected_activities|json}}
+</p>
+
+<p>
+{{matrix|json}}
+</p>
+</body></html>
