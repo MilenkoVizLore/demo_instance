@@ -2,8 +2,7 @@ import json
 
 from django.http import HttpResponse
 from django.views.generic import View
-from django.shortcuts import render
-from conrec.toolbox import get_recommendation
+from conrec.toolbox import get_recommendation, get_user_activity
 from conrec.poi_module import get_subcategories
 
 
@@ -72,4 +71,15 @@ class Matrix(View):
         response_data = 'We received your data'
         response = HttpResponse(response_data)
         response.status_code == 200
+        return response
+
+
+class Activity(View):
+    def get(self, request):
+        if 'user' in self.request.GET:
+            activity = get_user_activity(self.request.GET['user'])
+        else:
+            activity = "No user ID defined!"
+        response = HttpResponse(activity)
+        response.status_code = 200
         return response
