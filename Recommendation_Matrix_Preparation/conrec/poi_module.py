@@ -32,6 +32,7 @@ CATEGORIES_BASE_URL = "https://api.foursquare.com/v2/venues/categories?client_id
 
 POI_DP_URL = "http://localhost/poi_dp/"
 
+
 class GetFoursquareResponses(Thread):
     """
     This class is representing one thread sending request to Foursquare API and then processing received data and
@@ -39,8 +40,8 @@ class GetFoursquareResponses(Thread):
     """
     def __init__(self, category, ne_lat, ne_lng, sw_lat, sw_lng):
         self.results = []
-        self.key = (category.keys())[0]
-        self.category_list = (category.values())[0]
+        self.key = category['name']
+        self.category_list = category['foursquare']
         self.ne_lat = ne_lat
         self.ne_lng = ne_lng
         self.sw_lat = sw_lat
@@ -401,7 +402,7 @@ def fetch_poi(categories_list, lat, lng, stretch):
     needed_ids = check_for_areas(lst_ids)
 
     # For those that are not stored in database, call Foursquare and store data, for them.
-    poi_list = store_to_areas(categories_list ,needed_ids)
+    poi_list = store_to_areas(categories_list, needed_ids)
 
     # Make a search in Point od Interest Data Provider for POI-s in given radius.
     url = POI_DP_URL + ('/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, stretch))

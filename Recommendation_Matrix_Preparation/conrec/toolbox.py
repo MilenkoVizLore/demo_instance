@@ -47,46 +47,14 @@ class WritePOIToDatabase(Thread):
                 key.save()
 
 
-def get_time_section(time_periods, milliseconds):
-    """
-    Tells as what part of the day is it. Day is split to several sections like: morning, noon, afternoon,
-    evening, night. These are predefined by programmer.
-    :param time_periods: Time periods defined in recommendation matrix
-    :param milliseconds: Represents current time, in epoch (from January 1, 1970).
-    :return: Number representing concrete part of the day. This number is used to reference to lookup table.
-    """
-    time_s = datetime.fromtimestamp(milliseconds/1000)
-    hours = time_s.hour
-    minutes = time_s.minute
-
-    for i in range(0, len(time_periods)):
-        borders = (time_periods[i].values())[0]
-        if borders[0] <= hours < borders[2] and borders[1] <= minutes < (borders[3] + 60):
-            return i
-
-
-def get_curr_activity(activities_list, prob_dict):
+def get_curr_activity(prob_dict):
     """
     Figure out what category in dictionary of all categories have the best probability.
-    :param activities_list: List of defined activities.
     :param prob_dict: Dictionary with categories as keys, and probability as values.
-    :return: Number representing recognised category. This number is used to reference to lookup table.
+    :return: String representing recognised category.
     """
     new_prob = sorted(prob_dict.items(), key=operator.itemgetter(1), reverse=True)
-    activity = new_prob[0][0]
-    for i in range(0, len(activities_list)):
-        if activity == activities_list[i]:
-            return i
-
-
-def decode_activity(activities_list, activity):
-    """
-    Transforms integer representation of categories to string representation.
-    :param activities_list: List of defined activities.
-    :param activity: Number representing one of categories.
-    :return: String of recognised activity.
-    """
-    return activities_list[activity]
+    return new_prob[0][0]
 
 
 def get_user_activity(user_id):
@@ -109,31 +77,6 @@ def get_user_activity(user_id):
         return {"error": "Could not contact the server"}
 
 
-def get_poi(lat, lng, radius):
-    """
-    Search for points of interest on poi data provider, for the given search radius.
-    :param lat: Latitude of center point.
-    :param lng: Longitude of center point.
-    :param radius: Search radius.
-    :return: Returns points of interest database provider answer, dictionary of available points of interest in the
-    given radius.
-    """
-    url = 'http://104.154.38.236/poi_dp/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, radius)
-    headers = dict()
-    headers['Content-type'] = 'application/json'
-    result = None
-    try:
-        request = urllib2.Request(url, None, headers=headers)
-        result = urllib2.urlopen(request, timeout=10).read()
-    except:
-        return dict()
-    poi = json.loads(result)
-    if 'pois' in poi and len(poi['pois']) > 0:
-        return poi['pois']
-    else:
-        return dict()
-
-
 def decode_category(categories_list, category):
     """
     For some given category, already defined by programmer transforms string representation of category to integer
@@ -143,7 +86,7 @@ def decode_category(categories_list, category):
     :return: Integer representation of the given category.
     """
     for i in range(0, len(categories_list)):
-        if category == (categories_list[i].keys())[0]:
+        if category == categories_list[i]['name']:
             return i
 
 
@@ -219,15 +162,25 @@ def read_matrix(matrix_name):
         return rec_matrix
 
 
-def get_default_activity_index(activities_list):
+def get_grades(matrix, activity, time_stamp):
     """
-    Get index of default activity based on given activities list.
-    :param activities_list: List of defined activities.
-    :return: NUmber representing index of default activity.
+    Based on activity and time stamp, name one of predefined grades vector.
+    :param matrix: Dictionary describing recommendation matrix.
+    :param activity: String representation of activity.
+    :param time_stamp: Time from epoch in milliseconds.
+    :return: List containing grades for given profile.
     """
-    for i in range(0, len(activities_list)):
-        if activities_list[i] == "default":
-            return i
+    for profile in matrix['profiles']:
+        if activity in profile['activity']:
+            time_s = datetime.fromtimestamp(time_stamp/1000)
+            hours = time_s.hour
+            minutes = time_s.minute
+
+            for time in profile['time']:
+                if time[0] > hours >= time[2] and (time[1] + 60) > minutes >= time[3]:
+                    return profile['array']
+
+    return [1] * len(matrix['categories'])
 
 
 def get_recommendation(matrix_name, time_stamp, coordinates, user_id, ignore):
@@ -261,21 +214,20 @@ def get_recommendation(matrix_name, time_stamp, coordinates, user_id, ignore):
     poi_lst_of_dict.update(poi_lst_foursquare)
 
     # Get all required data for reading correct element of weight matrix.
-    part_of_day = get_time_section(recommendation_matrix['periods'], time_stamp)
     act_rest_answer = get_user_activity(user_id)
     if 'error' in act_rest_answer:
-        activity = get_default_activity_index(recommendation_matrix['activities'])
+        activity = 'not recognised'
     else:
         req_act = dict()
         for k, v in act_rest_answer['svm_vector'].iteritems():
             req_act[k] = float(v)
-        activity = get_curr_activity(recommendation_matrix['activities'], req_act)
+        activity = get_curr_activity(req_act)
 
     # Get id of all poi and rate them based on activity, context and distance
-    lookup_table = recommendation_matrix['matrix']
+    lookup_table = get_grades(recommendation_matrix, activity, time_stamp)
     for key, val in poi_lst_of_dict.iteritems():
         category_num = decode_category(recommendation_matrix['categories'], val['fw_core']['category'])
-        f_res = lookup_table[part_of_day][activity][category_num]
+        f_res = lookup_table[category_num]
         s_res = grade_distance(coordinates['lat'], coordinates['lon'],
                                val['fw_core']['location']['wgs84']['latitude'],
                                val['fw_core']['location']['wgs84']['longitude'])
@@ -294,7 +246,7 @@ def get_recommendation(matrix_name, time_stamp, coordinates, user_id, ignore):
 
     # Sort POIs based on grades and return first 5 elements.
     sort_poi_lst = sorted(poi_dict.items(), key=operator.itemgetter(1), reverse=True)
-    ret_dict = {"POIS": [], "activity": decode_activity(recommendation_matrix['activities'], activity)}
+    ret_dict = {"POIS": [], "activity": activity}
     if len(sort_poi_lst) > 5:
         n_it = 5
     else:

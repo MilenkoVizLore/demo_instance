@@ -25,4 +25,4 @@ class Keys(models.Model):
 
 class RecommendationMatrix(models.Model):
     name = models.CharField(max_length=60)
-    data = models.CharField(max_length=1024)
+    data = models.CharField(max_length=8192)

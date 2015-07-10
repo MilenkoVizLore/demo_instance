@@ -22,11 +22,14 @@
 
 <div>
 <h2>Define content/POI category</h2>
+<div class="example" data-text="Categories">
 <table class="table striped hovered cell-hovered border bordered">
+	<tr>
+		<th>Category Name</th>
+		<th>Foursquare Categories</th>
+	</tr>
+
 	<tr ng-repeat="category in categories">
-		<td>
-			<label for="name">Category Name</label>
-		</td>
 		<td>
 			<div class="input-control text">
 				<input type="text" name="name" ng-model="category.name"/>
@@ -34,7 +37,7 @@
 		</td>
 		<td>
 			<ui-select multiple ng-model="category.foursquare" theme="select2" style="width: 800px;">
-				<ui-select-match placeholder="Select category...">{{$item.name}}</ui-select-match>
+				<ui-select-match placeholder="Select foursquare category...">{{$item.name}}</ui-select-match>
 				<ui-select-choices repeat="item.id as item in foursquare | filter:$select.search">
 				<div ng-bind-html="item.name | highlight: $select.search"></div>
 				<small>
@@ -45,105 +48,132 @@
 		</td>
 	</tr>
 </table>
-
+</div>
 <button class="button success block-shadow-success text-shadow" ng-click="addCategories()">Add Category</button>
 <button class="button danger block-shadow-danger text-shadow" ng-click="removeCategories()">Remove Category</button>
 </div>
 
 <div>
 	<h2>Define context and activity profiles</h2>
-	<table ng-repeat="ti in time_intervals" class="table striped hovered cell-hovered border bordered">
+	
+	<div class="example" data-text="Profiles">
+	
+	<table class="table striped hovered border bordered">
+	
 		<tr>
-			<td>
-				<label for="name">Interval Name</label>
+			<th>Profile Name</th>
+			<th>Time Intervals</th>
+			<th>Activites</th>
+			<th>Recommendation Vector</th>
+		</tr>
+	
+		<tr ng-repeat="profile in profiles" class="row cells2">
+		
+		<td>
+			<div class="input-control text" style="display: block;">
+				<input type="text" ng-model="profile.name">
+			</div>
+		</td>
+		
+		<td>
+			<table>
+			
+			<tr>
+				<th colspan="2">Start time</th>
+				<th colspan="2">End time</th>
+			</tr>
+			
+			<tr>
+				<th>Hours</th>
+				<th>Minutes</th>
+				<th>Hours</th>
+				<th>Minutes</th>
+			<tr>
+			
+			<tr ng-repeat="interval in profile.time">
+				<td>
+				<select ng-model="interval[2]" ng-options="h for h in hours"></select>
+				</td>
+				
+				<td>
+				<select ng-model="interval[3]" ng-options="m for m in minutes"></select>
+				</td>
+				<td>
+				<select ng-model="interval[0]" ng-options="h for h in hours"></select>
+				</td>
+				<td>
+				<select ng-model="interval[1]" ng-options="m for m in minutes"></select>
+				</td>
+			</tr>
+			<tr>
+			
+			<td colspan="2">
+				<button class="button success block-shadow-success text-shadow" ng-click="addInterval(profile)"> Add Inteval</button>
 			</td>
-			<td>
-				<input type="number" name="ti_start_m" ng-model="$scope.time_interval_names[$index]"/>
+			
+			<td colspan="2">
+				<button class="button danger block-shadow-danger text-shadow" ng-click="removeInterval(profile)">Remove Inteval</button>
 			</td>
+			
+			</tr>
+			</table>
+			
 
-			<td>
-				<label for="ti_start_h">Start Inteval Hours</label>
-			</td>
-
-			<td>
-				<input type="number" name="ti_start_h" ng-model="ti[0]"/>
-			</td>
-
-			<td>
-				<label for="ti_start_m">Start Interval Minutes</label>
-			</td>
-
-			<td>
-				<input type="number" name="ti_start_m" ng-model="ti[1]"/>
-			</td>
-
-			<td>
-				<label for="ti_end_h">End Inteval Hours</label>
-			</td>
-
-			<td>
-				<input type="number" name="ti_end_h" ng-model="ti[2]"/>
-			</td>
-
-			<td>
-				<label for="ti_end_m">End Interval Minutes</label>
-			</td>
-
-			<td>
-				<input type="number" name="ti_end_m" ng-model="ti[3]">
-			</td>
+		</td>
+		
+		<td>
+			
+			<table class="table">
+			
+			<tr ng-repeat="activity in activities">
+				<td>
+					<input checklist-model="profile.activity" checklist-value="activity" type="checkbox">
+				</td>
+				
+				<td>
+					<span class="check"></span>
+					<span class="caption">{{activity}}</span>
+				</td>
+			</tr>
+			</table>
+		</td>
+		
+		<td>
+		
+			<table>
+			
+			<tr>
+				<th ng-repeat="category in categories">{{category.name}}</th>
+			</tr>
+			
+			<tr>
+				<td ng-repeat="category in categories">
+					<input type="number" style='width:60px' ng-model="profile.array[$index]">
+				</td>
+			</tr>
+			
+			</table>
+		
+		</td>
+		
 		</tr>
 	</table>
 
-	<button class="button success block-shadow-success text-shadow" ng-click="addInterval()"> Add Time interval</button>
-	<button class="button danger block-shadow-danger text-shadow" ng-click="removeInterval()">Remove Time interval</button>
-
-<div>
-
-<div>
-	<h2>Select activities you want to use! </h2>
-
-	<label ng-repeat="activity in activities" class="input-control padding10 checkbox small-check">
-		<input ng-change="allocateMatrix()" checklist-model="selected_activities" checklist-value="activity" type="checkbox" checked>
-		<span class="check"></span>
-		<span class="caption">{{activity}}</span>
-	</label>
+	</div>
+	
+	<button class="button success block-shadow-success text-shadow" ng-click="addProfile()"> Add Activity Profile</button>
+	<button class="button danger block-shadow-danger text-shadow" ng-click="removeProfile()">Remove Activity Profile</button>
+	<button class="button primary block-shadow-success text-shadow" ng-click="post()">Send data </button>
 </div>
 
-<div>
-	<h2>Recommendation Matrix</h2>
-	<table class="table striped hovered cell-hovered border bordered">
-
-	<tr>
-		<th colspan="2"></th>
-		<th ng-repeat="c in categories">{{c.name}}</th>
-	</tr>
-
-	<tr class="tr-for" ng-repeat-start="ti in time_intervals"></tr>
-		<th rowspan="{{selected_activities.length + 1}}">{{time_interval_names[$index]}}</th>
-		<tr ng-repeat-start="act in selected_activities" ng-repeat-end>
-			<th>{{act}}</th>		
-			<td ng-repeat="c in categories"><input ng-model="matrix[$parent.$index + selected_activities.length * $parent.$parent.$index][$index]" type="text"> </input></td>
-		</tr>
-	<tr class="tr-end" ng-repeat-end></tr>
-
-	</table>
-</div>
-
-<button class="button success block-shadow-success text-shadow" ng-click="post()">Send data </button>
-
 <p>
-{{categories|json}}
+	{{categories|json}}
 </p>
 
 <p>
-{{time_intervals|json}}
-</p>
-<p>
-{{selected_activities|json}}
+	{{profiles|json}}
 </p>
 
-<p>
-{{matrix|json}}
 </p>
-</body></html>
+</body>
+</html>
