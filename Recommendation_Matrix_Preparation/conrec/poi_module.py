@@ -38,8 +38,9 @@ class GetFoursquareResponses(Thread):
     This class is representing one thread sending request to Foursquare API and then processing received data and
     storing the data to POI Data Provider database.
     """
-    def __init__(self, category, ne_lat, ne_lng, sw_lat, sw_lng):
+    def __init__(self, matrix_name, category, ne_lat, ne_lng, sw_lat, sw_lng):
         self.results = []
+        self.matrix_name = matrix_name
         self.key = category['name']
         self.category_list = category['foursquare']
         self.ne_lat = ne_lat
@@ -50,14 +51,15 @@ class GetFoursquareResponses(Thread):
 
     def run(self):
         raw_data = extend(self.sw_lng, self.sw_lat, self.ne_lng, self.ne_lat, self.category_list)
+        print str(len(raw_data) + "=")
 
         for row in raw_data:
             info = {"fw_core": {"location": {"wgs84": {"latitude": row['geometry']['coordinates'][1],
                                                        "longitude": row['geometry']['coordinates'][0]}},
-                                "category": self.key,
+                                "category": self.matrix_name,
                                 "name": {"": row['properties']['name']},
-                                "short_name": {"": row['properties']['name']},
-                                "label": {"": row['properties']['category']},
+                                "short_name": {"": row['properties']['category']},
+                                "label": {"": self.key},
                                 "source": "foursquare"
                                 }
                     }
@@ -68,8 +70,9 @@ class GetGivenRectangles(Thread):
     """
     This class represents thread requesting POIs for given area.
     """
-    def __init__(self, categories, area_id):
+    def __init__(self, matrix_name, categories, area_id):
         self.results = []
+        self.matrix_name = matrix_name
         self.area_id = area_id
         self.categories = categories
         super(GetGivenRectangles, self).__init__()
@@ -79,7 +82,7 @@ class GetGivenRectangles(Thread):
         self.results.append(
             get_points_ne_sw(sw_ne['ne']['lat'], sw_ne['ne']['lng'],
                              sw_ne['sw']['lat'], sw_ne['sw']['lng'],
-                             self.categories)
+                             self.categories, self.matrix_name)
         )
 
         # Store given rectangle as existing to database.
@@ -328,7 +331,7 @@ def get_ids(coordinates):
     return ids
 
 
-def get_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
+def get_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories, matrix_name):
     """
     Function reads all POIs that are part of given categories and store them to list that is then returned.
     :param ne_lat: North-East latitude.
@@ -341,7 +344,7 @@ def get_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories):
     threads = []
     results = []
     for cat in categories:
-        t = GetFoursquareResponses(cat, ne_lat, ne_lng, sw_lat, sw_lng)
+        t = GetFoursquareResponses(matrix_name, cat, ne_lat, ne_lng, sw_lat, sw_lng)
         threads.append(t)
         t.start()
     for t in threads:
@@ -365,7 +368,7 @@ def check_for_areas(area_list):
     return lst_needed
 
 
-def store_to_areas(categories_list, area_id_list):
+def store_to_areas(matrix_name, categories_list, area_id_list):
     """
     Function that stores information for given area identification. Based of this identification, function gets
     coordinates and then makes call to Foursquare API to collect data and store it to POI Data Provider.
@@ -375,7 +378,7 @@ def store_to_areas(categories_list, area_id_list):
     threads = []
     results = []
     for area_id in area_id_list:
-        t = GetGivenRectangles(categories_list, area_id)
+        t = GetGivenRectangles(matrix_name, categories_list, area_id)
         threads.append(t)
         t.start()
     for t in threads:
@@ -386,7 +389,7 @@ def store_to_areas(categories_list, area_id_list):
     return results
 
 
-def fetch_poi(categories_list, lat, lng, stretch):
+def fetch_poi(matrix_name, categories_list, lat, lng, stretch):
     """
     Search for points of interest on poi data provider, for the given search radius.
     :param lat: Latitude of center point.
@@ -402,10 +405,10 @@ def fetch_poi(categories_list, lat, lng, stretch):
     needed_ids = check_for_areas(lst_ids)
 
     # For those that are not stored in database, call Foursquare and store data, for them.
-    poi_list = store_to_areas(categories_list, needed_ids)
+    poi_list = store_to_areas(matrix_name, categories_list, needed_ids)
 
     # Make a search in Point od Interest Data Provider for POI-s in given radius.
-    url = POI_DP_URL + ('/radial_search.php?lat=%f&lon=%f&radius=%d' % (lat, lng, stretch))
+    url = POI_DP_URL + ('/radial_search.php?lat=%f&lon=%f&radius=%d&category=%s' % (lat, lng, stretch, matrix_name))
     headers = dict()
     headers['Content-type'] = 'application/json'
     result = None

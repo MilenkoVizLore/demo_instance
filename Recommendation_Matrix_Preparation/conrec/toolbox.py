@@ -194,7 +194,8 @@ def get_recommendation(matrix_name, time_stamp, coordinates, user_id, ignore):
     """
     # Get all POIs in radius of 300 meters from user.
     recommendation_matrix = read_matrix(matrix_name)
-    points_of_interest = fetch_poi(recommendation_matrix['categories'], coordinates['lat'], coordinates['lon'], 300)
+    points_of_interest = fetch_poi(matrix_name, recommendation_matrix['categories'],
+                                   coordinates['lat'], coordinates['lon'], 300)
 
     # First we have to prepare necessary variables.
     length = len(points_of_interest[1])
@@ -226,6 +227,10 @@ def get_recommendation(matrix_name, time_stamp, coordinates, user_id, ignore):
     # Get id of all poi and rate them based on activity, context and distance
     lookup_table = get_grades(recommendation_matrix, activity, time_stamp)
     for key, val in poi_lst_of_dict.iteritems():
+        val['fw_core']['category'] = val['fw_core']['label']['']
+        val['fw_core']['label'] = val['fw_core']['short_name']
+        val['fw_core']['short_name'] = val['fw_core']['name']
+
         category_num = decode_category(recommendation_matrix['categories'], val['fw_core']['category'])
         f_res = lookup_table[category_num]
         s_res = grade_distance(coordinates['lat'], coordinates['lon'],
