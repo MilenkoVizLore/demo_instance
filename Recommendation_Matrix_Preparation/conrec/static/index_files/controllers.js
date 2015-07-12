@@ -10,10 +10,10 @@ phonecatApp.controller('PhoneListCtrl', function($scope, $http) {
 	$scope.hours = [];
 	$scope.minutes = [];
 	
-	for(var i = 0; i <= 24; i++)
+	for(var i = 0; i < 24; i++)
 		$scope.hours.push(i);
 	
-	for(var i = 0; i <= 60; i++)
+	for(var i = 0; i < 60; i++)
 		$scope.minutes.push(i);
 	
 	$scope.foursquare = [
@@ -38,10 +38,7 @@ phonecatApp.controller('PhoneListCtrl', function($scope, $http) {
 		alert("Foursquare data not loaded!")
 	});
 
-	$scope.categories = [{ "name" : "Cat 1", "foursquare" : []}, 
-						 { "name" : "Cat 2", "foursquare" : []}, 
-						 { "name" : "Cat 3", "foursquare" : []}, 
-						 { "name" : "Cat 4", "foursquare" : []}];
+	$scope.categories = [{ "name" : "Cat 1", "foursquare" : []}];
 
 	$scope.addCategories = function()
 	{
@@ -95,8 +92,24 @@ phonecatApp.controller('PhoneListCtrl', function($scope, $http) {
 		profile.time.pop();
 	};
 
+	$scope.validate = function()
+	{
+		for(var i in $scope.categories)
+		{
+			if($scope.categories[i].foursquare.length == 0)
+				return false;
+		}
+		return true;
+	};
+
 	$scope.post = function()
 	{
+		if(!$scope.validate())
+		{
+			alert("You must select a foursquare category for each category!");
+			return false;
+		}
+
 		var data = { "categories" : $scope.categories, "profiles" : $scope.profiles};
 		
 		console.log(data);

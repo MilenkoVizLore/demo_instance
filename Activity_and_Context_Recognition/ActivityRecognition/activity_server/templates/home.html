@@ -3,12 +3,18 @@
 <html>
 
 <head>
-    <title>Vizlore ActivityRecognition</title>
+	<title>Vizlore ActivityRecognition</title>
 
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.js"></script>
-    <script type="text/javascript" src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
-    <link rel="stylesheet" href="static/style.css">
-    <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.js"></script>
+	<script type="text/javascript" src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+	<link href="static/css/metro.min.css" rel="stylesheet">
+	<link href="static/css/metro-icons.min.css" rel="stylesheet">
+
+
+	<link rel="stylesheet" href="static/style.css">
+	<link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+	<script src="static/js/metro.min.js"></script>
 </head>
 <body>
 
@@ -16,61 +22,73 @@
 <br/>
 
 <div>
-    <h2>Data upload form</h2>
+	<h4>Upload the data collected from the Vizlore Mobile App Module and use the interface to recognise the uploaded activities.</h4>
+</div>
 
-    <div>
-        <span id="drop_zone_acc" class="drop_zone">Drop acceleration files here</span>
-        <span id="drop_zone_gyo" class="drop_zone">Drop gyroscope files here</span>
-        <input type="file" id="file_acc" name="files[]" class="file_chooser"/>
-        <input type="file" id="file_gyo" name="files[]" class="file_chooser"/>
-    </div>
+<div class="example" data-text="Upload data">
+	<h2>Data upload form</h2>
+
+	<input type="file" id="file_acc" name="files[]" class="file_chooser"/>
+	<input type="file" id="file_gyo" name="files[]" class="file_chooser"/>
+	<table class="table hovered cell-hovered">
+		<tr>
+			<td id="drop_zone_acc" class="drop_zone">Drop acceleration files here</td>
+		</tr>
+		<tr>
+			<td id="drop_zone_gyo" class="drop_zone">Drop gyroscope files here</td>
+		</tr>
+	</table>
+
 
     <p id="output"></p>
-    <button id="submit_button">Submit</button>
+    <button class="button success" id="submit_button">Submit</button>
 
 </div>
 
-<div>
+<div class="example" data-text="Activities">
     <h2>Activity recognition</h2>
 
     <div>
 
-        <label for="current_activity">Current activity:</label>
-        <input id="current_activity" type="checkbox">
+		<label>Current activity : </label>
+		<label class="switch">
+			<input id="current_activity" type="checkbox" checked>
+			<span class="check"></span>
+		</label>
 
-        <label for="start_ts">Start time stamp:</label>
-        <input id="start_ts" type="text" name="start_ts" value="0" disabled>
 
+		<label for="start_ts">Start time stamp:</label>
+		<div class="input-control text">
+			<input id="start_ts" type="text" name="start_ts" value="0" disabled>
+		</div>
 
-        <label for="end_ts">End time stamp: </label>
-        <input id="end_ts" type="text" name="end_ts" value="0" disabled>
+		<label for="end_ts">End time stamp: </label>
+		<div class="input-control text">
+			<input id="end_ts" type="text" name="end_ts" value="0" disabled>
+		</div>
 
-        <label>
+		<div class="input-control select">
             <select onchange="set_algorithm(this.value)">
                 <option value="svm">Support Vector Machine</option>
                 <option value="dt">Decision Tree Classifier</option>
             </select>
-        </label>
+        </div>
 
-        <label>
+		<div class="input-control select">
             <select onchange="set_feature_set(this.value)">
                 <option value="standard">Standard Feature Set</option>
                 <option value="enhanced">Extended Feature Set</option>
             </select>
-        </label>
+        </div>
 
         <div id="slider-range"></div>
-        <button id="activity_button">Recognise Activity</button>
+        <button class="button success" id="activity_button">Recognise Activity</button>
     </div>
 
     <output id="list"></output>
 </div>
 
 <script type="text/javascript" src="static/logic.js"></script>
-
-<script type="text/javascript">
-
-</script>
 
 </body>
 </html> 
