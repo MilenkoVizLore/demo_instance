@@ -1,9 +1,11 @@
 import json
+import hashlib
 
 from django.http import HttpResponse
 from django.views.generic import View
 from conrec.toolbox import get_recommendation, get_user_activity
 from conrec.poi_module import get_subcategories
+from conrec.models import RecommendationMatrix
 
 
 class Recommend(View):
@@ -66,9 +68,14 @@ class Categories(View):
 class Matrix(View):
     def post(self, request):
         recommendation_matrix = request.body
-        print "MATRIX: " + recommendation_matrix
-        # Hint, save request to database.
-        response_data = 'We received your data'
+        checksum = hashlib.md5()
+        checksum.update(recommendation_matrix)
+        response_data = checksum.hexdigest()
+
+        recommendation_matrix.replace("'", '"')
+        rm = RecommendationMatrix(name=response_data, data=recommendation_matrix)
+        rm.save()
+
         response = HttpResponse(response_data)
         response.status_code == 200
         return response

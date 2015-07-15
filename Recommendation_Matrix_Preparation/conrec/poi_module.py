@@ -51,8 +51,7 @@ class GetFoursquareResponses(Thread):
 
     def run(self):
         raw_data = extend(self.sw_lng, self.sw_lat, self.ne_lng, self.ne_lat, self.category_list)
-        print str(len(raw_data) + "=")
-
+        
         for row in raw_data:
             info = {"fw_core": {"location": {"wgs84": {"latitude": row['geometry']['coordinates'][1],
                                                        "longitude": row['geometry']['coordinates'][0]}},
