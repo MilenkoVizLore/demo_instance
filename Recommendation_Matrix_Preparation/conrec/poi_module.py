@@ -51,7 +51,7 @@ class GetFoursquareResponses(Thread):
 
     def run(self):
         raw_data = extend(self.sw_lng, self.sw_lat, self.ne_lng, self.ne_lat, self.category_list)
-        
+
         for row in raw_data:
             info = {"fw_core": {"location": {"wgs84": {"latitude": row['geometry']['coordinates'][1],
                                                        "longitude": row['geometry']['coordinates'][0]}},
@@ -85,7 +85,7 @@ class GetGivenRectangles(Thread):
         )
 
         # Store given rectangle as existing to database.
-        Area(lat_id=self.area_id['lat'], lng_id=self.area_id['lng']).save()
+        Area(name=self.matrix_name, lat_id=self.area_id['lat'], lng_id=self.area_id['lng']).save()
 
 
 def get_response(url):
@@ -353,7 +353,7 @@ def get_points_ne_sw(ne_lat, ne_lng, sw_lat, sw_lng, categories, matrix_name):
     return results
 
 
-def check_for_areas(area_list):
+def check_for_areas(area_list, name):
     """
     Check what area fields need to be stored to POI Data Provider, resulting in list of coordinates representing this
     areas.
@@ -362,7 +362,7 @@ def check_for_areas(area_list):
     """
     lst_needed = []
     for area in area_list:
-        if not Area.objects.filter(lat_id=area['lat'], lng_id=area['lng']).exists():
+        if not Area.objects.filter(name=name, lat_id=area['lat'], lng_id=area['lng']).exists():
             lst_needed.append(area)
     return lst_needed
 
@@ -401,7 +401,7 @@ def fetch_poi(matrix_name, categories_list, lat, lng, stretch):
     lst_ids = get_ids({'lat': lat, 'lng': lng})
 
     # For given fields check which are not in database.
-    needed_ids = check_for_areas(lst_ids)
+    needed_ids = check_for_areas(lst_ids, matrix_name)
 
     # For those that are not stored in database, call Foursquare and store data, for them.
     poi_list = store_to_areas(matrix_name, categories_list, needed_ids)

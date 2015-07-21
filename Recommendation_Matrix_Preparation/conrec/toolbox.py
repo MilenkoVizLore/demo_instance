@@ -183,13 +183,14 @@ def get_grades(matrix, activity, time_stamp):
     return [1] * len(matrix['categories'])
 
 
-def get_recommendation(matrix_name, time_stamp, coordinates, user_id, ignore):
+def get_recommendation(matrix_name, time_stamp, coordinates, user_id, ignore, number):
     """
     Main handler function for recommend.
     :param time_stamp: Time from beginning of the epoch (1.1.1970)
     :param coordinates: Dictionary with coordinates.
     :param user_id: Identification of the current user.
     :param ignore: Identification of POI user ignored from previous recommend.
+    :param number: Number of POIs to be recommended to end user.
     :return: Dictionary representing answer for request to recommend.
     """
     # Get all POIs in radius of 300 meters from user.
@@ -252,8 +253,8 @@ def get_recommendation(matrix_name, time_stamp, coordinates, user_id, ignore):
     # Sort POIs based on grades and return first 5 elements.
     sort_poi_lst = sorted(poi_dict.items(), key=operator.itemgetter(1), reverse=True)
     ret_dict = {"POIS": [], "activity": activity}
-    if len(sort_poi_lst) > 5:
-        n_it = 5
+    if len(sort_poi_lst) > number:
+        n_it = number
     else:
         n_it = len(sort_poi_lst)
     for num in range(0, n_it):

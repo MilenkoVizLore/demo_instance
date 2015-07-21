@@ -36,11 +36,12 @@ class Recommend(View):
         else:
             ignore = 'None'
 
-        # +--------------------------------------+
-        # | Get poi_num param for final version. |
-        # +--------------------------------------+
+        if 'number' in self.request.GET:
+            number = int(self.request.GET['number'])
+        else:
+            number = 5
 
-        dict_res = get_recommendation(matrix, ts, {'lat': lat, 'lon': lon}, uuid, ignore)
+        dict_res = get_recommendation(matrix, ts, {'lat': lat, 'lon': lon}, uuid, ignore, number)
         response = HttpResponse(json.dumps(dict_res), content_type="application/json")
         response.status_code = 200
         return response
@@ -55,7 +56,7 @@ class Recommend(View):
 class Test(View):
     def get(self, request):
         dict_res = get_recommendation('Test', 1429260495, {'lat': 45.254, 'lon': 19.824},
-                                      "vfdjv36q9347fdvgsdv", None)
+                                      "vfdjv36q9347fdvgsdv", None, 5)
         return HttpResponse(str(dict_res))
 
 

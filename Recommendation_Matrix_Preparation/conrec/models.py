@@ -13,6 +13,7 @@ class Ignore(models.Model):
 
 
 class Area(models.Model):
+    name = models.CharField(max_length=60)
     lat_id = models.IntegerField()
     lng_id = models.IntegerField()
 
