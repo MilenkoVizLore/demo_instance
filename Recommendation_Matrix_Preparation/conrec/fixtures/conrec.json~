@@ -1,0 +1,26 @@
+[
+{
+    "fields": {
+        "data": "{'categories':[{'name':'Entertaiment','foursquare':['4bf58dd8d48988d137941735','4bf58dd8d48988d181941735','52e81612bcbc57f1066b79ee','4deefb944765f83613cdba6e','4bf58dd8d48988d1e7941735','4bf58dd8d48988d1e2931735','4bf58dd8d48988d164941735','52e81612bcbc57f1066b7a25','4bf58dd8d48988d12f941735','4bf58dd8d48988d191941735','4bf58dd8d48988d163941735','4bf58dd8d48988d1fd941735','4bf58dd8d48988d15e941735','4bf58dd8d48988d1ed941735','4bf58dd8d48988d1e5931735','4bf58dd8d48988d1e5941735','4bf58dd8d48988d17f941735','4bf58dd8d48988d1c9941735']},{'name':'Morning','foursquare':['4bf58dd8d48988d1e0931735','4bf58dd8d48988d147941735','4bf58dd8d48988d16d941735','4bf58dd8d48988d143941735','4c38df4de52ce0d596b336e1','4bf58dd8d48988d175941735','4bf58dd8d48988d1c5941735','4bf58dd8d48988d16a941735','4bf58dd8d48988d1e5941735','4bf58dd8d48988d148941735']},{'name':'Lunch','foursquare':['4bf58dd8d48988d147941735','4bf58dd8d48988d117941735','4bf58dd8d48988d1c4941735','4bf58dd8d48988d1c0941735','4bf58dd8d48988d148941735','4bf58dd8d48988d1db931735','4bf58dd8d48988d1c1941735','4bf58dd8d48988d1d1941735','4bf58dd8d48988d1ce941735','4bf58dd8d48988d150941735','4bf58dd8d48988d16c941735','4bf58dd8d48988d110941735','4f04af1f2fb6e1c99f3db0bb','4bf58dd8d48988d17a941735','4bf58dd8d48988d1c3941735','4bf58dd8d48988d1d2941735','4bf58dd8d48988d111941735','4bf58dd8d48988d1df931735','4bf58dd8d48988d1cb941735','4bf58dd8d48988d16e941735','4bf58dd8d48988d16f941735','4bf58dd8d48988d1ca941735','4bf58dd8d48988d142941735','4bf58dd8d48988d16a941735','52e81612bcbc57f1066b79f1','52e81612bcbc57f1066b7a00','5283c7b4e4b094cb91ec88d7','4bf58dd8d48988d1c7941735','4bf58dd8d48988d150941735','4bf58dd8d48988d1bd941735','4bf58dd8d48988d1a1941735','4bf58dd8d48988d148941735','4bf58dd8d48988d1d0941735','5283c7b4e4b094cb91ec88d4','4bf58dd8d48988d1db931735']},{'name':'Club and Bar','foursquare':['4bf58dd8d48988d14b941735','4bf58dd8d48988d117941735','4bf58dd8d48988d11a941735','4bf58dd8d48988d116941735','50327c8591d4c4b30a586d5d','4bf58dd8d48988d1ca941735','4bf58dd8d48988d123951735','4bf58dd8d48988d1c7941735','4bf58dd8d48988d18e941735','4bf58dd8d48988d1e5931735','4bf58dd8d48988d11e941735','4bf58dd8d48988d11f941735']},{'name':'Transport','foursquare':['4bf58dd8d48988d1fd931735','52f2ab2ebcbc57f1066b8b51','4bf58dd8d48988d1fe931735','4bf58dd8d48988d12b951735','4bf58dd8d48988d130951735','4e4c9077bd41f78e849722f9']}],'profiles':[{'name':'Morning_Walking','time':[[10,30,6,0]],'activity':['walking'],'array':[2,5,1,1,4]},{'name':'Morning_Siting','time':[[10,30,6,0]],'activity':['sitting'],'array':[3,4,1,1,4]},{'name':'Morning_Standing','time':[[10,30,6,0]],'activity':[],'array':[3,4,1,1,4]},{'name':'Noon_Walking','time':[[15,0,10,30]],'activity':['walking'],'array':[4,2,5,1,1]},{'name':'Noon_Sitting','time':[[15,0,10,30]],'activity':['sitting'],'array':[4,1,3,1,1]},{'name':'Noon_Standing','time':[[15,0,10,30]],'activity':['standing'],'array':[5,1,4,1,1]},{'name':'Afternoon_Walking','time':[[18,0,15,0]],'activity':['walking'],'array':[4,4,2,2,3]},{'name':'Afternoon_Sitting','time':[[18,0,15,0]],'activity':['sitting'],'array':[4,4,1,2,3]},{'name':'Afternoon_Standing','time':[[18,0,15,0]],'activity':['standing'],'array':[4,4,1,2,3]},{'name':'Evening_Walking','time':[[21,59,18,0]],'activity':['walking'],'array':[3,1,5,4,4]},{'name':'Evening_Sitting_Standing','time':[[21,59,18,0]],'activity':['sitting','standing'],'array':[2,1,4,4,4]},{'name':'Night','time':[[0,0,22,0],[5,0,0,0]],'activity':['sitting','standing','walking'],'array':[1,1,1,4,5]}]}",
+        "name": "Test"
+    },
+    "model": "conrec.recommendationmatrix",
+    "pk": 8
+},
+{
+    "fields": {
+        "data": "{\"categories\":[{\"name\":\"Cat 1\",\"foursquare\":[\"52e81612bcbc57f1066b79f4\"]},{\"name\":\"Cat 2\",\"foursquare\":[\"4bf58dd8d48988d1e4931735\"]}],\"profiles\":[{\"name\":\"qwe\",\"time\":[[19,0,10,0]],\"activity\":[\"sitting\",\"walking\",\"standing\"],\"array\":[1,5]}]}",
+        "name": "6dedb3d8bd61c0ec5547eb605389f7dd"
+    },
+    "model": "conrec.recommendationmatrix",
+    "pk": 9
+},
+{
+    "fields": {
+        "data": "{\"categories\":[{\"name\":\"Morning\",\"foursquare\":[\"4bf58dd8d48988d128941735\",\"4bf58dd8d48988d16d941735\",\"4bf58dd8d48988d1f0941735\",\"4bf58dd8d48988d1f1931735\",\"4bf58dd8d48988d175941735\"]},{\"name\":\"Lunch\",\"foursquare\":[\"4bf58dd8d48988d14e941735\",\"4bf58dd8d48988d1c4941735\",\"4bf58dd8d48988d1c5941735\",\"4bf58dd8d48988d1fa931735\",\"4bf58dd8d48988d1a1941735\"]}],\"profiles\":[{\"name\":\"Test\",\"time\":[[13,0,10,0],[24,0,18,0]],\"activity\":[\"walking\",\"standing\",\"upstairs\"],\"array\":[1,5]}]}",
+        "name": "e15396d4c0bf4b55fa9fab1bc46afdca"
+    },
+    "model": "conrec.recommendationmatrix",
+    "pk": 10
+}
+]
