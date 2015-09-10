@@ -229,8 +229,8 @@ def get_recommendation(matrix_name, time_stamp, coordinates, user_id, ignore, nu
     lookup_table = get_grades(recommendation_matrix, activity, time_stamp)
     for key, val in poi_lst_of_dict.iteritems():
         val['fw_core']['category'] = val['fw_core']['label']['']
-        val['fw_core']['label'] = val['fw_core']['short_name']
-        val['fw_core']['short_name'] = val['fw_core']['name']
+        # val['fw_core']['label'] = val['fw_core']['short_name']
+        # val['fw_core']['short_name'] = val['fw_core']['name']
 
         category_num = decode_category(recommendation_matrix['categories'], val['fw_core']['category'])
         f_res = lookup_table[category_num]
