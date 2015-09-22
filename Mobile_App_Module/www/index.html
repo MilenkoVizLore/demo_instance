@@ -34,6 +34,7 @@
 		
         <!-- LIBS -->		
 		<script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/settings.js"></script>
         <script type="text/javascript" src="js/sensors.js"></script>
         <script type="text/javascript" src="js/map.js"></script>
         <script type="text/javascript" src="js/POIs.js"></script>
@@ -46,16 +47,46 @@
     <body>
 		<div data-role="page" id="home" data-theme="b">
 			<div id="header" data-role="header" data-theme="b">
-				<h1 style="font-size: 200%; margin: 0px auto 0px auto;" id="activity">Activity</h1>
-			</div>
+                <h1 style="font-size: 200%; margin: 0px auto 0px auto;" id="activity">Activity</h1>
+                <a id="settings" href="#settings_popup" data-icon="gear" class="ui-btn-right" data-rel="popup" data-position-to="window">Settings</a>
+                
+                <div data-role="popup" id="settings_popup" class="ui-corner-all ui-popup ui-body-a ui-overlay-shadow">
+                    <h1>Settings</h1>
+                    <label for="matrix_id">Matrix ID:</label>
+                    <input type="text" name="matrix_id" id="matrix_id" value="" data-theme="a" />
+                    <label for="acr_url">ACR URL:</label>
+                    <input type="url" name="acr_url" id="acr_url" value="" data-theme="a" />
+                    <label for="rmp_url">RMP URL:</label>
+                    <input type="url" name="rmp_url" id="rmp_url" value="" data-theme="a" />
+                    
+                    <table>
+                        <tr>
+                            <td>
+                                <label id="sending_data_label" for="sending_data">Sending data to server:</label>
+                            </td>
+                            <td>
+                                <select name="sending_data" id="sending_data" data-role="flipswitch" data-theme="a">
+                                    <option value="off">Off</option>
+                                    <option value="on">On</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                        
+                    <button id="confirm" data-icon="check" data-disabled="false" class="ui-btn-hidden" data-theme="a">Confirm changes</button>
+                    <button id="restore" data-icon="back" data-disabled="false" class="ui-btn-hidden" data-theme="a">Restore defaut</button>
+                </div>
+            </div>
+            
 			<div data-role="content" style="margin: 0px; padding: 0px;">
 				<div id="map"> </div>
 			</div>
+            
             <div id="footer" data-role="footer" data-position="fixed">
                 <a id="recommend" href="#">Recommend</a>
             </div>
 		</div>
-
+        
 		<!-- APP -->
         <script type="text/javascript">
 			app.initialize();

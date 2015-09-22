@@ -6,6 +6,7 @@
 /*global confirm*/
 /*global $*/
 /*global map*/
+/*global settings*/
 
 var sensors = {
     
@@ -25,27 +26,28 @@ var sensors = {
     },
     
     // Packet
-    packet: {uuid: null, acceleration: [], location: [], wifi: [], gyroscope: []},
+    packet: {uuid: null, acceleration: [], location: [], wifi: [], gyroscope: [], wifi_connected: null},
     sendData: function () {
         "use strict";
         sensors.packet.uuid = window.device.uuid;
         sensors.packet.gyroscope = [];
-
-        $.ajax({
-            type: 'POST',
-            data: JSON.stringify(sensors.packet),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            url: 'http://89.216.30.67:55555/ac/',
-            success: function (data) {
-                //alert("Data from server: " + JSON.stringify(data));
-            },
-            error: function () {
-                //alert('There was an error with getting data from server!');
-            }
-        });
+        if (settings.sending === "on") {
+            $.ajax({
+                type: 'POST',
+                data: JSON.stringify(sensors.packet),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                url: settings.acr_url + "/ac/",
+                success: function (data) {
+                    //alert("Data from server: " + JSON.stringify(data));
+                },
+                error: function (error) {
+                    //alert('There was an error with getting data from server!' + JSON.stringify(error));
+                }
+            });
+        }
         
-        sensors.packet = {uuid: null, acceleration: [], location: [], wifi: [], gyroscope: []};
+        sensors.packet = {uuid: null, acceleration: [], location: [], wifi: [], gyroscope: [], wifi_connected: null};
     },
     
     // Accelerometer
@@ -89,7 +91,6 @@ var sensors = {
             options = {
                 enableHighAccuracy: true
             };
-        
         this.gelocationWatch = navigator.geolocation.watchPosition(onSuccess, onError, options);
     },
     
@@ -103,6 +104,7 @@ var sensors = {
     initWifiWatch: function () {
         "use strict";
         var wifiCallback = function () {
+            window.wifi.refresh();
             var net = window.wifi.networks,
                 SSIDs = [],
                 networks,
@@ -120,6 +122,7 @@ var sensors = {
             timestamp = (new Date()).getTime();
             networks = { ssids: SSIDs, timestamp:  timestamp};
             sensors.packet.wifi.push(networks);
+            sensors.packet.wifi_connected = (window.wifi.lan.SSID === "<unknown ssid>") ? "not_connected" : window.wifi.lan.SSID;
         };
         
         this.wifiWatch = setInterval(wifiCallback, sensors.wifiInterval);
@@ -133,7 +136,7 @@ var sensors = {
             sensors.packet.gyroscope.push(speed);
         },
             onError = function (error) {
-                alert("Gyroscope: onError - " + JSON.stringify(error));
+                alert("Gyroscope: onError - " + error.message);
             },
             options = {
                 frequency: sensors.gyroscopeInterval

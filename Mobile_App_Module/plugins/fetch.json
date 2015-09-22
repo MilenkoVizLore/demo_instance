@@ -1,0 +1,43 @@
+{
+    "org.apache.cordova.device": {
+        "source": {
+            "type": "local",
+            "path": "C:\\Users\\dzon\\.plugman\\cache\\org.apache.cordova.device\\0.2.10\\package"
+        }
+    },
+    "org.apache.cordova.device-motion": {
+        "source": {
+            "type": "git",
+            "url": "https://github.com/dimitrijejankov/cordova-plugin-device-motion",
+            "subdir": "."
+        }
+    },
+    "org.apache.cordova.geolocation": {
+        "source": {
+            "type": "local",
+            "path": "C:\\Users\\dzon\\.plugman\\cache\\org.apache.cordova.geolocation\\0.3.8\\package"
+        }
+    },
+    "org.apache.cordova.wifiinfo": {
+        "source": {
+            "type": "git",
+            "url": "https://github.com/ManRueda/org.apache.cordova.wifiinfo",
+            "subdir": "."
+        }
+    },
+    "org.dartlang.phonegap.gyroscope": {
+        "source": {
+            "type": "git",
+            "url": "https://github.com/srkiVL/cordova-plugin-gyroscope",
+            "subdir": "."
+        }
+    },
+    "cordova-plugin-whitelist": {
+        "source": {
+            "type": "registry",
+            "id": "cordova-plugin-whitelist"
+        },
+        "is_top_level": true,
+        "variables": {}
+    }
+}

@@ -17,6 +17,7 @@
  * under the License.
  */
 
+/*global settings*/
 /*global sensors*/
 /*global map*/
 /*global POIs*/
@@ -43,6 +44,7 @@ var app = {
         app.receivedEvent('deviceready');
 
         //navigator.splashscreen.show();
+        settings.init();
         sensors.init();
         map.init();
         POIs.init();

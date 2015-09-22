@@ -91,6 +91,5 @@ var map = {
         }
         map.locationMarker = L.marker([lat, lon], {icon: icon}).addTo(this.map);
     }
-    
-    
+     
 };

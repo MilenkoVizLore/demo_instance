@@ -7,13 +7,13 @@
 /*global sensors*/
 /*global device*/
 /*global map*/
+/*global settings*/
 
 var POIs = {
     
     init: function () {
         "use strict";
         this.initRecommend();
-        
     },
     
     // Init recommend button
@@ -62,13 +62,13 @@ var POIs = {
     // Get POIs from recommender
     getPOIs: function (ignore_id) {
         "use strict";
+        
         var position = sensors.getCachedPosition(),
             data = {
                 uuid: device.uuid,
                 lat: position.coords.latitude,
                 lon: position.coords.longitude,
-                /*lat: 41.402486,
-                lon: 2.188002,*/
+                matrix: settings.matrix_id,
                 ts: (new Date()).getTime(),
                 ac: 1
             };
@@ -82,7 +82,7 @@ var POIs = {
             data: data,
             contentType: "application/json; charset=utf-8",
             dataType: "json",
-            url: 'http://130.211.136.203:8000/recommend',
+            url: settings.rmp_url + "/recommend/",
             success: function (data) {
                 POIs.showMarkers(data);
             },
