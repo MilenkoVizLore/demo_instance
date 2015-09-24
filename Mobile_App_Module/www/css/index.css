@@ -215,4 +215,29 @@ h1 {
     display: block;
     margin: 5px 20px 5px 20px;
 }
-		
+/*
+#settings {
+    float: right;
+    position: relative;
+    top: -55px;
+    margin-right: 20px;
+    padding: 12px 10px;
+}
+*/
+#dialog {
+    display: none;   
+}
+	
+#settings {
+    padding: 12px 12px 12px 32px ;
+    margin-top: 3px;
+}
+
+#settings_popup {
+    padding: 10px 20px;
+    width: 325px;
+}
+
+#sending_data_label {
+    margin: 0px 15px 0px 0px;
+}

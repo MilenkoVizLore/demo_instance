@@ -41,7 +41,7 @@ RUN /etc/init.d/postgresql restart && sleep 120 && mongod --fork --logpath /var/
     && ./create_tables.sh \
     && cp -r /WeX/poi/php /var/www/poi_dp \
     && wget http://getcomposer.org/composer.phar \
-    && php composer.phar require justinrainbow/json-schema:~1.3 \
+    && php composer.phar require justinrainbow/json-schema:1.4.1 \
     && cp -r vendor /var/www/poi_dp/ \
     && mv /var/www/poi_dp /var/www/html/poi_dp/
 
