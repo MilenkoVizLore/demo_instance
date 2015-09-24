@@ -115,7 +115,7 @@ phonecatApp.controller('PhoneListCtrl', function($scope, $http) {
 		console.log(data);
 		$http.post('../matrix', data).
 		success(function(data, status, headers, config) {
-			alert("Data sent!")
+			alert(data)
 		}).
 		error(function(data, status, headers, config) {
 			alert("Sending failed!");
